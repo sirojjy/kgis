@@ -1,0 +1,898 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:bordered_text/bordered_text.dart';
+import 'package:bpjtteknik/conn/API.dart';
+import 'package:bpjtteknik/helper/main_helper.dart';
+import 'package:bpjtteknik/utils/utils.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_arcgis/esri_plugin.dart';
+import 'package:flutter_map_arcgis/layers/feature_layer_options.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart' as clstr;
+import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong/latlong.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:package_info/package_info.dart';
+import 'package:search_choices/search_choices.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sweetalert/sweetalert.dart';
+
+class MapActivityPage extends StatefulWidget {
+  final long;
+  final lat;
+
+  MapActivityPage({
+    this.long,
+    this.lat
+  });
+
+  @override
+  _MapActivityPageState createState() => _MapActivityPageState();
+}
+
+class _MapActivityPageState extends State<MapActivityPage> {
+  bool isReset = false;
+  bool isMove = false;
+  bool isSearch = false;
+  bool _loading = false;
+
+  String _selectedStatus;
+  String _selectedSubStatus;
+  String _selectedRegion;
+  String _selectedSegment;
+
+  List tappedPoints = [];
+  
+  MapController mapController;
+  final ScrollController _scrollCtrl = ScrollController();
+  Position _position;
+  final clstr.PopupController _popupController = clstr.PopupController();
+  List<StreamSubscription<dynamic>> _streamSubscriptions = <StreamSubscription<dynamic>>[];
+
+  String appName;
+  String packageName;
+  String version;
+  String buildNumber;
+
+  _getInfo() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      appName = packageInfo.appName;
+      packageName = packageInfo.packageName;
+      version = packageInfo.version;
+      buildNumber = packageInfo.buildNumber;
+    });
+  }
+  
+  var _activities = [];
+
+  var prefId;
+  var prefName;
+  var prefCompany;
+  var prefCompanyField;
+  var prefPhone;
+  var prefEmail;
+  var prefRoleId;
+  var prefIsApprove;
+  List prefSegments = List();
+  var prefMapType;
+
+  String basemap;
+  List<String> basemapSubdomain;
+
+  var polylinesArr = <Polyline>[];
+  var featureLayer = <FeatureLayerOptions>[];
+  
+  List _segmentStatus = List();
+  List _segmentSubStatus = List();
+  List _segmentRegion = List();
+  List _segment = List();
+  List _mapService = List();
+
+  List data = [];
+
+  var buildCheckbox;
+
+  Map<String, bool> checkboxValue = {
+    'Jembatan Underpass' : false,
+    'Jembatan' : false,
+    'At Grade' : false,
+    'Pile Slab' : false,
+    'Gerbang Tol' : false,
+    'Pipa Gas' : false,
+    'Titik Awal' : false,
+    'Box Underpass' : false,
+    'Talang Air' : false,
+    'Box Traffic' : false,
+    'Box Overpass' : false,
+    'Jembatan Overpass' : false,
+    'Frontage' : false,
+    'Simpang Sebidang' : false,
+    'Kabel Sutet' : false,
+    'RCP' : false,
+    'STA' : false,
+    'Elevated' : false,
+    'Simpang Susun' : false,
+    'Titik Akhir' : false,
+    'Jembatan Sungai' : false,
+    'JPO' : false,
+    'Box Pedestrian' : false,
+    'Box Culvert' : false,
+    'Penanganan Tanah Lunak' : false,
+    'Bangunan Kantor' : false,
+    'Seksi' : false
+  };
+
+  _getPref() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefId = prefs.getString('id');
+    prefName = prefs.getString('name');
+    prefCompany = prefs.getString('company');
+    prefCompanyField = prefs.getString('company_field');
+    prefPhone = prefs.getString('phone');
+    prefEmail = prefs.getString('email');
+    prefRoleId = prefs.getString('role_id');
+    prefIsApprove = prefs.getBool('is_approve');
+    prefSegments = jsonDecode(prefs.getString('segments'));
+    prefMapType = prefs.getString('map_type');
+  }
+  
+  Future<void> _getAllActivities() async {
+    await API.getAllActivities("", _selectedSegment, "", "", "", version).then((response) {
+      if (!mounted) return;
+      setState(() {
+        if (response != null) {
+          if (response["data"].length > 0) {
+            _activities.addAll(response["data"]);
+          }
+        }
+
+        for(var x = 0; x < _activities.length; x++) {
+          // tappedPoints.add(LatLng(double.parse(_activities[x]["lat"]), double.parse(_activities[x]["long"])));
+          var activityDetails = _activities[x]["activity_details"];
+          var photo = '';
+
+          if (activityDetails.length > 0) {
+            photo = activityDetails[0]["filepath"]+"/"+activityDetails[0]["filename"];
+          }
+
+          tappedPoints.add({"lat": double.parse(_activities[x]["lat"]), "long": double.parse(_activities[x]["long"]), "activity_details": _activities[x]["activity"], "date": _activities[x]["date"], "photo": photo});
+        }
+
+        _loading = false;
+      });
+    });
+  }
+
+  _listSegmentStatus() async {
+    await API.getSegmentStatus(version).then((response) {
+      setState(() {
+        _segmentStatus = response;
+      });
+    });
+  }
+
+  _listSegmentSubStatus(String status) async {
+    await API.getSegmentSubStatus(status, version).then((response) {
+      setState(() {
+        _segmentSubStatus = response;
+      });
+    });
+  }
+
+  _listSegmentRegion() async {
+    await API.getSegmentRegion("", "", version).then((response) {
+      setState(() {
+        _segmentRegion = response;
+      });
+    });
+  }
+
+  _listSegment(String status, String subStatus, String region) async {
+    await API.getSegment(status, subStatus, region, "true", version).then((response) {
+      setState(() {
+        if (prefCompanyField == "PMI") {
+          _segment.clear();
+          _mapService.clear();
+          for(var i = 0; i < response.length; i++){
+              if (prefSegments.contains(response[i])) {
+                _segment.add(response[i]);
+              }
+          }
+        } else {
+          _segment = response;
+        }
+      });
+    });
+  }
+
+  _listMapService(String status, String subStatus, String region, String segment) async {
+    await API.getMapService(status, subStatus, region, segment, version).then((response) {
+      setState(() {
+        _mapService = response;
+      });
+    });
+  }
+  
+  void _submit() async {
+    data.clear();
+    checkboxValue.forEach((final String key, final value) {
+      if (value) {
+        for(var i = 0; i < _mapService.length; i++) {
+          // if (key == _mapService[i].keys.toString().replaceAll('(', '').replaceAll(')', '').trim()) {
+          //   data.add({"url": key, "type": _mapService[i].keys});
+          // }
+          for (var _child in _mapService[i].values) {
+            for(var x = 0; x < _child.length; x++) {
+              if (key == _child[x]["sub_panel"] || key == _mapService[i].keys.toString().replaceAll('(', '').replaceAll(')', '').trim()) {
+                data.add({"url": _child[x]["map_service"], "type": _child[x]["type"], "key": key, "features": []});
+              }
+            }
+          }
+        }
+      }
+    });
+
+    for (var y = 0; y < data.length; y++) {
+      await _callFeatureServerEndpoint(data[y]["url"], data[y]["type"], data[y]["key"], y);
+      featureLayer.addAll([
+        FeatureLayerOptions(
+          url: data[y]["url"],
+          geometryType: data[y]["type"],
+          attr: data[y]["features"],
+          onTap: (attributes, LatLng location) {
+            if (data[y]["type"] == 'polyline') {
+
+            } else if (data[y]["type"] == 'polygon') {
+              if (data[y]["key"] == "Gerbang Tol") {
+                SweetAlert.show(context,
+                  title: (attributes["jenis"] == null ? "-" : attributes["jenis"]),
+                  subtitle: (attributes["nama"] == null ? "-" : attributes["nama"])
+                );
+              } else {
+                SweetAlert.show(context,
+                  title: (attributes["jenis"] == null ? "-" : attributes["jenis"])+" "+(attributes["nama"] == null ? "-" : attributes["nama"])+" - "+(attributes["sta"] == null ? "-" : attributes["sta"]),
+                );
+              }
+            } else if (data[y]["type"] == 'point') {
+              if (data[y]["key"] == "At Grade") {
+                SweetAlert.show(context,
+                  title: (attributes["konstruksi"] == null ? "-" : attributes["konstruksi"]),
+                  subtitle: (attributes["sta_awal"] == null ? "-" : attributes["sta_awal"])+ " "+(attributes["sta_akhir"] == null ? "-" : attributes["sta_akhir"])
+                );
+              } else if (data[y]["key"] == "Titik Awal" || data[y]["key"] == "Titik Akhir") {
+                SweetAlert.show(context,
+                  title: (attributes["jenis"] == null ? "-" : attributes["jenis"]),
+                  subtitle: "Seksi : "+(attributes["seksi"] == null ? "-" : attributes["seksi"])
+                );
+              } else if (data[y]["key"] == "Box Underpass") {
+                SweetAlert.show(context,
+                  title: (attributes["jenis"] == null ? "-" : attributes["jenis"]),
+                  subtitle: (attributes["nama"] == null ? "-" : attributes["nama"])
+                );
+              } else if (data[y]["key"] == "Box Pedestrian" || data[y]["key"] == "Box Culvert") {
+                SweetAlert.show(context,
+                  title: (attributes["jenis"] == null ? "-" : attributes["jenis"]),
+                  subtitle: "STA : " +(attributes["sta"] == null ? "-" : attributes["sta"])
+                );
+              } 
+              else {
+                SweetAlert.show(context,
+                  title: "STA : "+(attributes["sta"] == null ? "-" : attributes["sta"]),
+                  subtitle: "Nama : " + (attributes["nama"] == null ? "-" : attributes["nama"])
+                );
+              }
+            }
+          },
+          render: (dynamic attributes) {
+            // You can render by attribute
+            if (data[y]["type"] == 'polyline') {
+              if (isReset) {
+                for (int i = 0; i < attributes.length; i++) {
+                  // var _polylinePoint = <LatLng>[];
+                  // for (var _point in attributes[i]["geometry"]["paths"][0]) {
+                  //   _polylinePoint.add(LatLng(_point[1].toDouble(), _point[0].toDouble()));
+                  // }
+                  for (var _point in attributes[i]["geometry"]["paths"]) {
+                    var _polylinePoint = <LatLng>[];
+                    
+                    for (var _pointChild in _point) {
+                      _polylinePoint.add(LatLng(_pointChild[1].toDouble(), _pointChild[0].toDouble()));
+                    }
+
+                    if (!isMove) {
+                      mapController.move(_polylinePoint[0], 15.0);
+                      setState(() {
+                        isMove = true;
+                      });
+                    }
+
+                    polylinesArr.add(Polyline(
+                      points: _polylinePoint,
+                      strokeWidth: 3.0,
+                      // color: polylineColors[i],
+                      color: Colors.blue.withOpacity(0.7),
+                      // borderColor: Colors.black,
+                      // borderStrokeWidth: 2.0
+                    ));
+                  }
+                }
+              }
+              
+              setState(() {
+                isReset = false;
+              });
+            } else if (data[y]["type"] == 'polygon') {
+              if (!isMove) {
+                mapController.move(LatLng(double.parse(attributes["_lat"]), double.parse(attributes["_long"])), 15.0);
+                setState(() {
+                  isMove = true;
+                });
+              }
+              return PolygonOptions(
+                borderColor: Colors.blueAccent,
+                color: Colors.black12,
+                borderStrokeWidth: 2
+              );
+            } else if (data[y]["type"] == 'point') {
+              if (!isMove) {
+                mapController.move(LatLng(double.parse(attributes["_lat"]), double.parse(attributes["_long"])), 15.0);
+                setState(() {
+                  isMove = true;
+                });
+              }
+
+              return Marker(
+                width: 65.0,
+                height: 65.0,
+                builder: (ctx) => Column(
+                  children: [
+                    BorderedText(
+                      strokeWidth: 1.0,
+                      strokeColor: Colors.black,
+                      child: Text(
+                        attributes['sta'],
+                        style: TextStyle(
+                          decoration: TextDecoration.none,
+                          fontSize: 17.0,
+                          decorationColor: Colors.blue,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.location_on, color: Colors.blue,)
+                  ],
+                )
+              );
+            }
+          },
+          resp: (dynamic attributes) {
+            if (data[y]["features"].isEmpty) {
+              data[y]["features"] = attributes;
+            }
+          }
+        ),
+      ]);
+    }
+
+    _getAllActivities();
+
+    setState(() {
+      isSearch = false;
+      _loading = false;
+    });
+  }
+  
+   _callFeatureServerEndpoint(String url, String type, String key, int count) async {
+    await API.getFeatureServer(url, type, key, version).then((response) {
+      // setState(() {
+        data[count]["features"] = response;
+      // });
+      // data.add({"url": url, "type": type, "key": key, "features": response});
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    mapController = MapController();
+    _getInfo().then((resInfo) {
+      _listSegmentRegion();
+      _checkPermission();
+      _getCurrentPosition();
+      _addLocationStream();
+      _getPref().then((response) {
+        if (prefMapType == null) {
+          _getBaseMap("osm");
+          _getBaseMapSubdomain("osm");
+        } else {
+          _getBaseMap(prefMapType);
+          _getBaseMapSubdomain(prefMapType);
+        }
+        _getAllActivities().then((resActivitys) {
+          _listSegmentStatus();
+          if (!mounted) return;
+          setState(() {
+            _loading = false;
+          });
+        });
+      });
+    });
+  }
+
+   _getBaseMap(String map) async {
+      setState(() {
+        basemap = baseMap(map);
+      });
+  }
+
+  _getBaseMapSubdomain(String map) async {
+    setState(() {
+      basemapSubdomain = baseMapSubdomain(map);
+    });
+  }
+  
+   _getCurrentPosition() async {
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        _position = position;
+      });
+  }
+
+  _addLocationStream() {
+    StreamSubscription<Position> positionStream = Geolocator.getPositionStream(desiredAccuracy: LocationAccuracy.high, distanceFilter: 10)
+        .listen((Position position) {
+
+      setState(() {
+        _position = position;
+        if (widget.long == null && widget.lat == null) {
+          mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
+        }
+      });
+      // _sendLocationData();
+    });
+    _streamSubscriptions.add(positionStream);
+  }
+
+  _checkPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    // image: "http://103.6.53.254:13480/bpjt-teknik/public"+path+"/" + url,
+    var markers = tappedPoints.map((latlng) {
+      return ActivityMarker(
+        activity: Activity(
+          name: latlng["activity_details"] == null ? '-' : latlng["activity_details"],
+          imagePath:
+              'http://103.6.53.254:13480/bpjt-teknik/public'+latlng["photo"],
+          lat: latlng["lat"],
+          long: latlng["long"],
+          date: latlng["date"]
+        ),
+      );
+    }).toList();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Map Kegiatan'),
+        backgroundColor: colorPrimary,
+        actions: [
+          GestureDetector(
+            onTap: () async {
+              setState(() {
+                if (isSearch) {
+                  isSearch = false;
+                } else {
+                  isSearch = true;
+                }
+                isReset = true;
+              });
+            },
+            child: Row(
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(right: 10.0),
+                  child: Icon(Icons.layers),
+                ),
+              ],
+            )
+          ),
+        ],
+      ),
+      body: ModalProgressHUD(
+        child: Container(
+          padding: EdgeInsets.all(12),
+          child: Column(
+            children: [
+              Container(
+                height: isSearch ? 200.0 : 0.0,
+                child: Visibility(
+                  visible: isSearch,
+                  child: Scrollbar(
+                    isAlwaysShown: true,
+                    thickness: 8.0,
+                    controller: _scrollCtrl,
+                    child: ListView(
+                      controller: _scrollCtrl,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.only(left: 10.0),
+                          child: Text("Silahkan Filter Untuk Menampilkan Peta", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),)
+                        ),
+
+                        Container(
+                          padding: const EdgeInsets.only(left: 10.0),
+                          child: Text("Region")
+                        ),
+                        Container(
+                          child: ListTile(
+                            title: DropdownButton(
+                              isExpanded: true,
+                              hint: Row(
+                                children: <Widget>[
+                                  Text('Pilih Region'),
+                                ],
+                              ),
+                              items: _segmentRegion.map((item) {
+                                return DropdownMenuItem(
+                                  value: item.toString(),
+                                  child: FittedBox(
+                                      fit: BoxFit.contain,
+                                      child: Text(item, style: TextStyle(fontSize: 13.0, color: Colors.black),)
+                                  )
+                                );
+                              }).toList(),
+                              onChanged: (newVal) {
+                                _listSegment(_selectedStatus, _selectedSubStatus, newVal);
+                                setState(() {
+                                  _selectedRegion = newVal;
+                                  _selectedSegment = null;
+                                });
+                              },
+                              value: _selectedRegion,
+                              underline: Container(color:Colors.black, height:0.5),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.only(left: 10.0),
+                          child: Text("Ruas")
+                        ),
+                        Container(
+                          child: ListTile(
+                            title: SearchChoices.single(
+                              items: _segment.map((item) {
+                                return DropdownMenuItem(
+                                  value: item,
+                                  child: FittedBox(
+                                      fit: BoxFit.contain,
+                                      child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
+                                  )
+                                );
+                              }).toList(),
+                              selectedValueWidgetFn: (item) {
+                                return Container(
+                                  transform: Matrix4.translationValues(-10,0,0),
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
+                                );
+                              },
+                              hint: Container(
+                                transform: Matrix4.translationValues(-10,0,0),
+                                child: Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
+                              ),
+                              searchHint: "Pilih Ruas",
+                              onChanged: (newVal) {
+                                _listMapService(_selectedStatus, _selectedSubStatus, _selectedRegion, newVal);
+                                setState(() {
+                                  _selectedSegment = newVal;
+                                });
+                              },
+                              value: _selectedSegment,
+                              isExpanded: true,
+                              displayClearIcon: false,
+                              underline: Container(color:Colors.black, height:0.5),
+                              icon: Container(
+                                transform: Matrix4.translationValues(10,0,0),
+                                child: Icon(Icons.arrow_drop_down)
+                              ),
+                            ),
+                          ),
+                        ),
+                        buildCheckboxes(),
+                        Container(
+                          // width: MediaQuery.of(context).size.width * 0.8,
+                          child: RaisedButton(
+                            elevation: 0.8,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            onPressed: () {
+                              polylinesArr.clear();
+                              setState(() {
+                                isReset = true;
+                                isMove = false;
+                                mapController.move(LatLng(_position.latitude, _position.longitude), 4);
+                                _loading = true;
+                              });
+                              _submit();
+                            },
+                            padding: EdgeInsets.all(12),
+                            color: colorPrimary,
+                            child: Text('SUBMIT', style: TextStyle(color: Colors.white)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                ),
+              ),
+              Expanded(
+                child: (_position == null) ?
+                Container()
+                :
+                FlutterMap(
+                  mapController: mapController,
+                  options: MapOptions(
+                    // bounds: LatLngBounds(LatLng(58.8, 6.1), LatLng(59, 6.2)),
+                    // boundsOptions: FitBoundsOptions(padding: EdgeInsets.all(8.0)),
+                    center: widget.lat != null && widget.long != null ?
+                    LatLng(double.parse(widget.lat), double.parse(widget.long))
+                    :
+                    LatLng(_position.latitude, _position.longitude),
+                    zoom: widget.lat != null && widget.long != null ?
+                    18.0
+                    :
+                    15.0,
+                    plugins: [
+                      // MyCustomPlugin(),
+                      // ScaleLayerPlugin(),
+                      clstr.MarkerClusterPlugin(),
+                      EsriPlugin(),
+                      // ZoomButtonsPlugin(),
+                    ],
+                    onTap: (_) => _popupController
+                        .hidePopup(), // Hide popup when the map is tapped.
+                  ),
+                  layers: [
+                  TileLayerOptions(
+                    urlTemplate: basemap,
+                    subdomains: basemapSubdomain,
+                    maxZoom: 20
+                  ),
+                    MarkerLayerOptions(
+                      markers: [
+                        Marker(
+                          width: 80.0,
+                          height: 80.0,
+                          point: LatLng(_position.latitude, _position.longitude),
+                          builder: (ctx) =>
+                          Container(
+                            child: Icon(Icons.my_location, color: Colors.red,),
+                          ),
+                        ),
+                      ],
+                    ),
+                    PolylineLayerOptions(
+                      polylines: polylinesArr,
+                    ),
+                    // ScaleLayerPluginOption(
+                    //   lineColor: Colors.blue,
+                    //   lineWidth: 2,
+                    //   textStyle: TextStyle(color: Colors.blue, fontSize: 12),
+                    //   padding: EdgeInsets.all(10),
+                    // ),
+                    clstr.MarkerClusterLayerOptions(
+                      maxClusterRadius: 120,
+                      disableClusteringAtZoom: 9,
+                      size: Size(40, 40),
+                      anchor: AnchorPos.align(AnchorAlign.center),
+                      fitBoundsOptions: FitBoundsOptions(
+                        padding: EdgeInsets.all(50),
+                      ),
+                      markers: markers,
+                      polygonOptions: clstr.PolygonOptions(
+                        borderColor: Colors.blueAccent,
+                        color: Colors.black12,
+                        borderStrokeWidth: 3
+                      ),
+                      popupOptions: clstr.PopupOptions(
+                        popupSnap: clstr.PopupSnap.top,
+                        popupController: _popupController,
+                        popupBuilder: (_, Marker marker) {
+                          if (marker is ActivityMarker) {
+                            return ActivityMarkerPopup(activity: marker.activity);
+                          }
+                          return Card(child: const Text('Not a monument'));
+                        },
+                      ),
+                      builder: (context, markers) {
+                        return FloatingActionButton(
+                          child: Text(markers.length.toString()),
+                          onPressed: null,
+                        );
+                      },
+                    ),
+                    for(var item in featureLayer ) item
+                  ],
+                ),
+              )
+            ],
+          )
+        ),
+        inAsyncCall: _loading,
+      ),
+      // floatingActionButton: _getFAB()
+    );
+  }
+
+  Widget _getFAB() {
+    return SpeedDial(
+      animatedIcon: AnimatedIcons.menu_close,
+      animatedIconTheme: IconThemeData(size: 22),
+      backgroundColor: Colors.white,
+      visible: true,
+      curve: Curves.bounceIn,
+      children: [
+        SpeedDialChild(
+          child: Icon(Icons.map_outlined),
+          backgroundColor: Colors.white,
+          onTap: () async { 
+            SharedPreferences preferences = await SharedPreferences.getInstance();
+            preferences.setString('map_type', "google");
+            Phoenix.rebirth(context);
+          },
+          label: 'Google Basemap',
+          labelStyle: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              fontSize: 16.0),
+          labelBackgroundColor: colorPrimary
+        ),
+        SpeedDialChild(
+          child: Icon(Icons.map_outlined),
+          backgroundColor: Colors.white,
+          onTap: () async { 
+            SharedPreferences preferences = await SharedPreferences.getInstance();
+            preferences.setString('map_type', "osm");
+            Phoenix.rebirth(context);
+          },
+          label: 'OSM Basemap',
+          labelStyle: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              fontSize: 16.0),
+          labelBackgroundColor: colorPrimary
+        ),
+        SpeedDialChild(
+          child: Icon(Icons.map_outlined),
+          backgroundColor: Colors.white,
+          onTap: () async { 
+            SharedPreferences preferences = await SharedPreferences.getInstance();
+            preferences.setString('map_type', "arcgis");
+            Phoenix.rebirth(context);
+          },
+          label: 'Other Basemap',
+          labelStyle: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              fontSize: 16.0),
+          labelBackgroundColor: colorPrimary
+        ),
+      ],
+    );
+  }
+  
+  Widget buildCheckboxes() {
+    List<Widget> parentCheckboxes = List<Widget>();
+    
+    for(var i = 0; i < _mapService.length; i++) {
+      if (_mapService[i].keys.toString() != '()') {
+        String segmentName = _mapService[i].keys.toString().replaceAll('(', '').replaceAll(')', '').trim();
+
+        if (!checkboxValue.containsKey(segmentName)) {
+          checkboxValue[segmentName] = false;
+        }
+
+        parentCheckboxes.add(
+          Container(
+            margin: const EdgeInsets.only(left: 10.0, right: 40.0),
+            child: CheckboxListTile(
+              title: Text(segmentName),
+              value: checkboxValue[segmentName],
+              onChanged: (val) {
+                setState(() {
+                  checkboxValue[segmentName] = val; 
+                }); 
+              },
+            ),
+          )
+        );
+        for (var _child in _mapService[i].values) {
+          for(var x = 0; x < _child.length; x++) {
+            if ((_child[x]["sub_panel"]).trim() != '-' && (_child[x]["sub_panel"]).trim() != null) {
+              parentCheckboxes.add(
+                Container(
+                  margin: const EdgeInsets.only(left: 35.0, right: 40.0),
+                  child: CheckboxListTile(
+                    title: Text((_child[x]["sub_panel"]).trim()),
+                    value: checkboxValue[(_child[x]["sub_panel"]).trim()],
+                    onChanged: (val) {
+                      setState(() {
+                        checkboxValue[(_child[x]["sub_panel"]).trim()] = val; 
+                      }); 
+                    },
+                  ),
+                )
+              );
+            }
+          }
+        }
+      }
+    }
+
+    return Column(
+      children: parentCheckboxes,
+    );
+  }
+}
+
+class Activity {
+  static const double size = 30;
+
+  Activity({this.name, this.date, this.imagePath, this.activity, this.lat, this.long});
+
+  final String name;
+  final String date;
+  final String imagePath;
+  final String activity;
+  final double lat;
+  final double long;
+}
+
+class ActivityMarker extends Marker {
+  ActivityMarker({@required this.activity})
+      : super(
+          anchorPos: AnchorPos.align(AnchorAlign.top),
+          height: Activity.size,
+          width: Activity.size,
+          point: LatLng(activity.lat, activity.long),
+          builder: (BuildContext ctx) => Icon(Icons.location_on, color: Colors.red,),
+        );
+
+  final Activity activity;
+}
+
+class ActivityMarkerPopup extends StatelessWidget {
+  const ActivityMarkerPopup({Key key, this.activity}) : super(key: key);
+  final Activity activity;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 200,
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        color: Colors.white.withOpacity(0.8),
+        child: Container(
+          padding: EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Image.network(activity.imagePath, height: 100),
+              Text(activity.date),
+              Text(activity.name),
+              Text('${activity.lat}-${activity.long}'),
+            ],
+          ),
+        )
+      ),
+    );
+  }
+}

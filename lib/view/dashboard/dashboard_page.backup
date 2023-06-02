@@ -1,0 +1,862 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:bordered_text/bordered_text.dart';
+import 'package:bpjtteknik/conn/API.dart';
+import 'package:bpjtteknik/drawer.dart';
+import 'package:bpjtteknik/helper/db.dart';
+import 'package:bpjtteknik/helper/main_helper.dart';
+import 'package:bpjtteknik/utils/scale_layer_plugin_option.dart';
+import 'package:bpjtteknik/utils/utils.dart';
+import 'package:bpjtteknik/view/dashboard/no_position_page.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map/plugin_api.dart';
+import 'package:flutter_map_arcgis/flutter_map_arcgis.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong/latlong.dart';
+import 'package:package_info/package_info.dart';
+import 'package:search_choices/search_choices.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sweetalert/sweetalert.dart';
+
+class DashboardPage extends StatefulWidget {
+  @override
+  _DashboardPageState createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  bool isReset = false;
+  bool isMove = false;
+  bool isSearch = false;
+  bool isLocateMe = true;
+
+  var prefId;
+  var prefName;
+  var prefCompany;
+  var prefCompanyField;
+  var prefPhone;
+  var prefEmail;
+  var prefRoleId;
+  var prefIsApprove;
+  List prefSegments = List();
+  var prefMapType;
+  var prefPosition;
+
+  String basemap;
+  List<String> basemapSubdomain;
+
+  MapController mapController;
+  final ScrollController _scrollCtrl = ScrollController();
+  Position _position;
+  List<StreamSubscription<dynamic>> _streamSubscriptions = <StreamSubscription<dynamic>>[];
+  var polylinesArr = <Polyline>[];
+  var featureLayer = <FeatureLayerOptions>[];
+  var polylineColors = <Color>[
+    Colors.red,
+    Colors.yellow,
+    Colors.green,
+    Colors.teal,
+    Colors.indigo
+  ];
+
+  String _selectedStatus;
+  String _selectedSubStatus;
+  String _selectedRegion;
+  String _selectedSegment;
+
+  List _segmentStatus = List();
+  List _segmentSubStatus = List();
+  List _segmentRegion = List();
+  List _segment = List();
+  List _mapService = List();
+
+  List data = [];
+
+  var buildCheckbox;
+
+  Map<String, bool> checkboxValue = {
+    'Jembatan Underpass' : false,
+    'Jembatan' : false,
+    'At Grade' : false,
+    'Pile Slab' : false,
+    'Gerbang Tol' : false,
+    'Pipa Gas' : false,
+    'Titik Awal' : false,
+    'Box Underpass' : false,
+    'Talang Air' : false,
+    'Box Traffic' : false,
+    'Box Overpass' : false,
+    'Jembatan Overpass' : false,
+    'Frontage' : false,
+    'Simpang Sebidang' : false,
+    'Kabel Sutet' : false,
+    'RCP' : false,
+    'STA' : false,
+    'Elevated' : false,
+    'Simpang Susun' : false,
+    'Titik Akhir' : false,
+    'Jembatan Sungai' : false,
+    'JPO' : false,
+    'Box Pedestrian' : false,
+    'Box Culvert' : false,
+    'Penanganan Tanah Lunak' : false,
+    'Bangunan Kantor' : false,
+    'Seksi' : false
+  };
+
+  String appName;
+  String packageName;
+  String version;
+  String buildNumber;
+
+  _getInfo() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      appName = packageInfo.appName;
+      packageName = packageInfo.packageName;
+      version = packageInfo.version;
+      buildNumber = packageInfo.buildNumber;
+    });
+  }
+  
+  _listSegmentStatus() async {
+    await API.getSegmentStatus(version).then((response) {
+      if (!mounted) return;
+      setState(() {
+        _segmentStatus = response;
+      });
+    });
+  }
+
+  _listSegmentSubStatus(String status) async {
+    await API.getSegmentSubStatus(status, version).then((response) {
+      if (!mounted) return;
+      setState(() {
+        _segmentSubStatus = response;
+      });
+    });
+  }
+
+  _listSegmentRegion() async {
+    await API.getSegmentRegion("", "", version).then((response) {
+      if (!mounted) return;
+      showUpdateAppsModal(context, response);
+      setState(() {
+        _segmentRegion = response;
+      });
+    });
+  }
+
+  _listSegment(String status, String subStatus, String region) async {
+    await API.getSegment(status, subStatus, region, "true", version).then((response) {
+      if (!mounted) return;
+      setState(() {
+        if (prefCompanyField == "PMI") {
+          _segment.clear();
+          _mapService.clear();
+          for(var i = 0; i < response.length; i++){
+              if (prefSegments.contains(response[i])) {
+                _segment.add(response[i]);
+              }
+          }
+        } else {
+          _segment = response;
+        }
+      });
+    });
+  }
+
+  _listMapService(String status, String subStatus, String region, String segment) async {
+    await API.getMapService(status, subStatus, region, segment, version).then((response) {
+      if (!mounted) return;
+      setState(() {
+        _mapService = response;
+      });
+    });
+  }
+
+  _callFeatureServerEndpoint(String url, String type, String key, int count) async {
+    await API.getFeatureServer(url, type, key, version).then((response) {
+      // setState(() {
+        data[count]["features"] = response;
+      // });
+      // data.add({"url": url, "type": type, "key": key, "features": response});
+    });
+  }
+  
+  _getPref() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefId = prefs.getString('id');
+    prefName = prefs.getString('name');
+    prefCompany = prefs.getString('company');
+    prefCompanyField = prefs.getString('company_field');
+    prefPhone = prefs.getString('phone');
+    prefEmail = prefs.getString('email');
+    prefRoleId = prefs.getString('role_id');
+    prefIsApprove = prefs.getBool('is_approve');
+    prefSegments = prefs.getString('segments') != null ? jsonDecode(prefs.getString('segments')) : null;
+    prefMapType = prefs.getString('map_type');
+    prefPosition = prefs.getString('position');
+  }
+
+  void _submit() async {
+    data.clear();
+    checkboxValue.forEach((final String key, final value) {
+      if (value) {
+        for(var i = 0; i < _mapService.length; i++) {
+          // if (key == _mapService[i].keys.toString().replaceAll('(', '').replaceAll(')', '').trim()) {
+          //   data.add({"url": key, "type": _mapService[i].keys});
+          // }
+          for (var _child in _mapService[i].values) {
+            for(var x = 0; x < _child.length; x++) {
+              if (key == _child[x]["sub_panel"] || key == _mapService[i].keys.toString().replaceAll('(', '').replaceAll(')', '').trim()) {
+                data.add({"url": _child[x]["map_service"], "type": _child[x]["type"], "key": key, "features": []});
+              }
+            }
+          }
+        }
+      }
+    });
+
+    for (var y = 0; y < data.length; y++) {
+      await _callFeatureServerEndpoint(data[y]["url"], data[y]["type"], data[y]["key"], y);
+      featureLayer.addAll([
+        FeatureLayerOptions(
+          url: data[y]["url"],
+          geometryType: data[y]["type"],
+          attr: data[y]["features"],
+          onTap: (attributes, LatLng location) {
+            if (data[y]["type"] == 'polyline') {
+
+            } else if (data[y]["type"] == 'polygon') {
+              if (data[y]["key"] == "Gerbang Tol") {
+                SweetAlert.show(context,
+                  title: (attributes["jenis"] == null ? "-" : attributes["jenis"]),
+                  subtitle: (attributes["nama"] == null ? "-" : attributes["nama"])
+                );
+              } else {
+                SweetAlert.show(context,
+                  title: (attributes["jenis"] == null ? "-" : attributes["jenis"])+" "+(attributes["nama"] == null ? "-" : attributes["nama"])+" - "+(attributes["sta"] == null ? "-" : attributes["sta"]),
+                );
+              }
+            } else if (data[y]["type"] == 'point') {
+              if (data[y]["key"] == "At Grade") {
+                SweetAlert.show(context,
+                  title: (attributes["konstruksi"] == null ? "-" : attributes["konstruksi"]),
+                  subtitle: (attributes["sta_awal"] == null ? "-" : attributes["sta_awal"])+ " "+(attributes["sta_akhir"] == null ? "-" : attributes["sta_akhir"])
+                );
+              } else if (data[y]["key"] == "Titik Awal" || data[y]["key"] == "Titik Akhir") {
+                SweetAlert.show(context,
+                  title: (attributes["jenis"] == null ? "-" : attributes["jenis"]),
+                  subtitle: "Seksi : "+(attributes["seksi"] == null ? "-" : attributes["seksi"])
+                );
+              } else if (data[y]["key"] == "Box Underpass") {
+                SweetAlert.show(context,
+                  title: (attributes["jenis"] == null ? "-" : attributes["jenis"]),
+                  subtitle: (attributes["nama"] == null ? "-" : attributes["nama"])
+                );
+              } else if (data[y]["key"] == "Box Pedestrian" || data[y]["key"] == "Box Culvert") {
+                SweetAlert.show(context,
+                  title: (attributes["jenis"] == null ? "-" : attributes["jenis"]),
+                  subtitle: "STA : " +(attributes["sta"] == null ? "-" : attributes["sta"])
+                );
+              } else {
+                SweetAlert.show(context,
+                  title: "STA : "+(attributes["sta"] == null ? "-" : attributes["sta"]),
+                  subtitle: "Nama : " + (attributes["nama"] == null ? "-" : attributes["nama"])
+                );
+              }
+            }
+          },
+          render: (dynamic attributes) {
+            // You can render by attribute
+            if (data[y]["type"] == 'polyline') {
+              if (isReset) {
+                for (int i = 0; i < attributes.length; i++) {
+                  // var _polylinePoint = <LatLng>[];
+                  // for (var _point in attributes[i]["geometry"]["paths"][0]) {
+                  //   _polylinePoint.add(LatLng(_point[1].toDouble(), _point[0].toDouble()));
+                  // }
+                  for (var _point in attributes[i]["geometry"]["paths"]) {
+                    var _polylinePoint = <LatLng>[];
+                    
+                    for (var _pointChild in _point) {
+                      _polylinePoint.add(LatLng(_pointChild[1].toDouble(), _pointChild[0].toDouble()));
+                    }
+
+                    if (!isMove) {
+                      mapController.move(_polylinePoint[0], 15.0);
+                      setState(() {
+                        isMove = true;
+                      });
+                    }
+
+                    polylinesArr.add(Polyline(
+                      points: _polylinePoint,
+                      strokeWidth: 3.0,
+                      // color: polylineColors[i],
+                      color: Colors.blue.withOpacity(0.7),
+                      // borderColor: Colors.black,
+                      // borderStrokeWidth: 2.0
+                    ));
+                  }
+                }
+              }
+              
+              setState(() {
+                isReset = false;
+              });
+            } else if (data[y]["type"] == 'polygon') {
+              if (!isMove) {
+                mapController.move(LatLng(double.parse(attributes["_lat"]), double.parse(attributes["_long"])), 15.0);
+                setState(() {
+                  isMove = true;
+                });
+              }
+              return PolygonOptions(
+                borderColor: Colors.blueAccent,
+                color: Colors.black12,
+                borderStrokeWidth: 2
+              );
+            } else if (data[y]["type"] == 'point') {
+              if (!isMove) {
+                mapController.move(LatLng(double.parse(attributes["_lat"]), double.parse(attributes["_long"])), 15.0);
+                setState(() {
+                  isMove = true;
+                });
+              }
+              
+              return Marker(
+                width: 65.0,
+                height: 65.0,
+                builder: (ctx) => Column(
+                  children: [
+                    BorderedText(
+                      strokeWidth: 1.0,
+                      strokeColor: Colors.black,
+                      child: Text(
+                        attributes['sta'],
+                        style: TextStyle(
+                          decoration: TextDecoration.none,
+                          fontSize: 17.0,
+                          decorationColor: Colors.blue,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.location_on, color: Colors.blue,)
+                  ],
+                )
+              );
+            }
+          },
+          resp: (dynamic attributes) {
+            if (data[y]["features"].isEmpty) {
+              data[y]["features"] = attributes;
+            }
+          }
+        ),
+      ]);
+    }
+
+    setState(() {
+      isSearch = false;
+      isLocateMe = false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    Db.syncToServer();
+    mapController = MapController();
+    _getInfo().then((resInfo) {
+      _getPref().then((res) {
+        if (prefPosition == null && prefCompanyField == 'PMI') {
+          Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => NoPositionPage()), (Route<dynamic> route) => false);
+          return;
+        }
+
+        if (prefMapType == null) {
+          _getBaseMap("osm");
+          _getBaseMapSubdomain("osm");
+        } else {
+          _getBaseMap(prefMapType);
+          _getBaseMapSubdomain(prefMapType);
+        }
+      });
+      _listSegmentRegion();
+      _checkPermission();
+      _getCurrentPosition();
+      _addLocationStream();
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }  
+
+   _getBaseMap(String map) async {
+     if (!mounted) return;
+      setState(() {
+        basemap = baseMap(map);
+      });
+  }
+
+  _getBaseMapSubdomain(String map) async {
+    if (!mounted) return;
+    setState(() {
+      basemapSubdomain = baseMapSubdomain(map);
+    });
+  }
+
+   _getCurrentPosition() async {
+      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      if (!mounted) return;
+      setState(() {
+        _position = position;
+      });
+  }
+
+  _addLocationStream() {
+    StreamSubscription<Position> positionStream = Geolocator.getPositionStream(desiredAccuracy: LocationAccuracy.high, distanceFilter: 10)
+        .listen((Position position) {
+      if (!mounted) return;
+      setState(() {
+        _position = position;
+        if (position.latitude != null && position.longitude != null && !isSearch && mapController.ready && isLocateMe) {
+          mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
+        }
+      });
+      // _sendLocationData();
+    });
+    _streamSubscriptions.add(positionStream);
+  }
+  
+  _checkPermission() async {
+    await Geolocator.checkPermission();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!mounted) return Container();
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Beranda'),
+        backgroundColor: colorPrimary,
+        actions: [
+          Visibility(
+            visible: prefCompanyField == 'PMI' || prefCompanyField == 'PMO' || prefCompanyField == 'BPJT' ? true : false,
+            child: GestureDetector(
+              onTap: () async {
+                setState(() {
+                  if (isSearch) {
+                    isSearch = false;
+                  } else {
+                    isSearch = true;
+                  }
+                  isReset = true;
+                });
+              },
+              child: Row(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(right: 10.0),
+                    child: Icon(Icons.layers),
+                  ),
+                ],
+              )
+            ),
+          )
+        ],
+      ),
+      drawer: DrawerBuild().drw(context, prefCompanyField),
+      body: Container(
+        padding: const EdgeInsets.all(5.0),
+        child: 
+        Column(
+          // physics: NeverScrollableScrollPhysics(),
+          children: [
+            Container(
+              height: isSearch ? 200.0 : 0.0,
+              child: Visibility(
+                visible: isSearch,
+                child: Scrollbar(
+                  isAlwaysShown: true,
+                  thickness: 8.0,
+                  controller: _scrollCtrl,
+                  child: ListView(
+                    controller: _scrollCtrl,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.only(left: 10.0),
+                        child: Text("Silahkan Filter Untuk Menampilkan Peta", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),)
+                      ),
+
+                      Container(
+                        padding: const EdgeInsets.only(left: 10.0),
+                        child: Text("Region")
+                      ),
+                      Container(
+                        child: ListTile(
+                          title: DropdownButton(
+                            isExpanded: true,
+                            hint: Row(
+                              children: <Widget>[
+                                Text('Pilih Region'),
+                              ],
+                            ),
+                            items: _segmentRegion.map((item) {
+                              return DropdownMenuItem(
+                                value: item.toString(),
+                                child: FittedBox(
+                                    fit: BoxFit.contain,
+                                    child: Text(item, style: TextStyle(fontSize: 13.0, color: Colors.black),)
+                                )
+                              );
+                            }).toList(),
+                            onChanged: (newVal) {
+                              _listSegment(_selectedStatus, _selectedSubStatus, newVal);
+                              
+                              setState(() {
+                                _selectedSegment = null;
+                                _selectedRegion = newVal;
+                              });
+                            },
+                            value: _selectedRegion,
+                            underline: Container(color:Colors.black, height:0.5),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.only(left: 10.0),
+                        child: Text("Ruas")
+                      ),
+                      Container(
+                        child: ListTile(
+                          title: SearchChoices.single(
+                            items: _segment.map((item) {
+                              return DropdownMenuItem(
+                                value: item,
+                                child: FittedBox(
+                                    fit: BoxFit.contain,
+                                    child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
+                                )
+                              );
+                            }).toList(),
+                            selectedValueWidgetFn: (item) {
+                              if (_selectedSegment == null) {
+                                return Container(
+                                  transform: Matrix4.translationValues(-10,0,0),
+                                  alignment: Alignment.centerLeft,
+                                  child: Text("", style: TextStyle(fontSize: 12.0, color: Colors.black),)
+                                );
+                              } else {
+                                return Container(
+                                  transform: Matrix4.translationValues(-10,0,0),
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
+                                );
+                              }
+                            },
+                            hint: Container(
+                              transform: Matrix4.translationValues(-10,0,0),
+                              child: Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
+                            ),
+                            searchHint: "Pilih Ruas",
+                            onChanged: (newVal) {
+                              _listMapService(_selectedStatus, _selectedSubStatus, _selectedRegion, newVal);
+                              setState(() {
+                                _selectedSegment = newVal;
+                              });
+                            },
+                            value: _selectedSegment,
+                            isExpanded: true,
+                            displayClearIcon: false,
+                            underline: Container(color:Colors.black, height:0.5),
+                            icon: Container(
+                              transform: Matrix4.translationValues(10,0,0),
+                              child: Icon(Icons.arrow_drop_down)
+                            ),
+                          ),
+                        ),
+                      ),
+                      buildCheckboxes(),
+                      Container(
+                        // width: MediaQuery.of(context).size.width * 0.8,
+                        child: RaisedButton(
+                          elevation: 0.8,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          onPressed: () {
+                            polylinesArr.clear();
+                            setState(() {
+                              isReset = true;
+                              isMove = false;
+                              mapController.move(LatLng(_position.latitude, _position.longitude), 4);
+                            });
+                            _submit();
+                          },
+                          padding: EdgeInsets.all(12),
+                          color: colorPrimary,
+                          child: Text('SUBMIT', style: TextStyle(color: Colors.white)),
+                        ),
+                      ),
+                      
+                    ],
+                  ),
+                )
+              ),
+            ),
+            Expanded(
+              // height: 550.0,
+              child: (_position == null || basemap == null) ?
+              Center(
+                child: Container(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 5.0),
+                      Text('Memuat Peta, Harap Menunggu...', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 11.0))
+                    ],
+                  )
+                ),
+              )
+              :
+              (prefCompanyField == 'PMI' || prefCompanyField == 'PMO' || prefCompanyField == 'BPJT') ?
+              FlutterMap(
+                mapController: mapController,
+                options: MapOptions(
+                  center: LatLng(_position.latitude, _position.longitude),
+                  zoom: 14.0,
+                  plugins: [
+                    ScaleLayerPlugin(),
+                    EsriPlugin()
+                  ]
+                ),
+                layers: [
+                  TileLayerOptions(
+                    urlTemplate: basemap,
+                    subdomains: basemapSubdomain,
+                    maxZoom: 20
+                  ),
+                  MarkerLayerOptions(
+                    markers: [
+                      Marker(
+                        width: 80.0,
+                        height: 80.0,
+                        point: LatLng(_position.latitude, _position.longitude),
+                        builder: (ctx) =>
+                        Container(
+                          child: Icon(Icons.my_location, color: Colors.red,),
+                        ),
+                      ),
+                    ],
+                  ),
+                  PolylineLayerOptions(
+                    polylines: polylinesArr,
+                  ),
+                  ScaleLayerPluginOption(
+                    lineColor: Colors.blue,
+                    lineWidth: 2,
+                    textStyle: TextStyle(color: Colors.blue, fontSize: 12),
+                    padding: EdgeInsets.all(10),
+                  ),
+                  for(var item in featureLayer ) item
+                ],
+              )
+              :
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Selamat Datang '+prefName+',', style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 45.0,
+                    fontFamily: "LatoLight",
+                  ), textAlign: TextAlign.center,),
+                  SizedBox(height: 10.0,),
+                  Text("Silahkan klik tombol menu di pojok kiri atas, untuk langkah selanjutnya.", style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 30.0,
+                    fontFamily: "LatoLight",
+                  ), textAlign: TextAlign.center,),
+                  SizedBox(height: 10.0,),
+                  Image.asset(
+                    'assets/images/logo.png',
+                    height: 120.0,
+                  ),
+                ],
+              )
+            )
+          ],
+        )
+      ),
+      floatingActionButton: _getFAB(),
+    );
+  }
+
+  Widget _getFAB() {
+    return SpeedDial(
+      animatedIcon: AnimatedIcons.menu_close,
+      animatedIconTheme: IconThemeData(size: 22),
+      backgroundColor: Colors.white,
+      visible: true,
+      curve: Curves.bounceIn,
+      children: [
+        SpeedDialChild(
+          child: Icon(Icons.my_location),
+          backgroundColor: Colors.white,
+          onTap: () async { 
+            mapController.move(LatLng(_position.latitude, _position.longitude), mapController.zoom);
+          },
+          label: 'Posisi Saya',
+          labelStyle: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              fontSize: 16.0),
+          labelBackgroundColor: colorPrimary
+        ),
+        SpeedDialChild(
+          child: Icon(Icons.map_outlined),
+          backgroundColor: Colors.white,
+          onTap: () async { 
+            SharedPreferences preferences = await SharedPreferences.getInstance();
+            preferences.setString('map_type', "google");
+            Phoenix.rebirth(context);
+          },
+          label: 'Google Basemap',
+          labelStyle: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              fontSize: 16.0),
+          labelBackgroundColor: colorPrimary
+        ),
+        SpeedDialChild(
+          child: Icon(Icons.map_outlined),
+          backgroundColor: Colors.white,
+          onTap: () async { 
+            SharedPreferences preferences = await SharedPreferences.getInstance();
+            preferences.setString('map_type', "osm");
+            Phoenix.rebirth(context);
+          },
+          label: 'OSM Basemap',
+          labelStyle: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              fontSize: 16.0),
+          labelBackgroundColor: colorPrimary
+        ),
+        SpeedDialChild(
+          child: Icon(Icons.map_outlined),
+          backgroundColor: Colors.white,
+          onTap: () async { 
+            SharedPreferences preferences = await SharedPreferences.getInstance();
+            preferences.setString('map_type', "arcgis");
+            Phoenix.rebirth(context);
+          },
+          label: 'Other Basemap',
+          labelStyle: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              fontSize: 16.0),
+          labelBackgroundColor: colorPrimary
+        ),
+      ],
+    );
+  }
+  
+  bool checked = false;
+  
+  Widget buildCheckboxes() {
+    List<Widget> parentCheckboxes = List<Widget>();
+    
+    for(var i = 0; i < _mapService.length; i++) {
+      if (_mapService[i].keys.toString() != '()') {
+        String segmentName = _mapService[i].keys.toString().replaceAll('(', '').replaceAll(')', '').trim();
+
+        if (!checkboxValue.containsKey(segmentName)) {
+          checkboxValue[segmentName] = false;
+        }
+        
+        parentCheckboxes.add(
+          Container(
+            margin: const EdgeInsets.only(left: 10.0, right: 40.0),
+            child: CheckboxListTile(
+              title: Text(segmentName),
+              value: checkboxValue[segmentName],
+              onChanged: (val) {
+                setState(() {
+                  checkboxValue[segmentName] = val; 
+                }); 
+              },
+            ),
+          )
+        );
+        for (var _child in _mapService[i].values) {
+          // for(var x = 0; x < _child.length; x++) {
+          //   if (_child[x]["sub_panel"] != '-' && _child[x]["sub_panel"] != null && checkboxValue[_child[x]["sub_panel"]] != null) {
+          //     parentCheckboxes.add(
+          //       Container(
+          //         margin: const EdgeInsets.only(left: 35.0, right: 40.0),
+          //         child: CheckboxListTile(
+          //           title: Text(_child[x]["sub_panel"]),
+          //           value: checkboxValue[_child[x]["sub_panel"]],
+          //           onChanged: (val) {
+          //             setState(() {
+          //               checkboxValue[_child[x]["sub_panel"]] = val; 
+          //             }); 
+          //           },
+          //         ),
+          //       )
+          //     );
+          //   }
+          // }
+        }
+      }
+    }
+
+    return Column(
+      children: parentCheckboxes,
+    );
+  }
+}
+
+class MyCustomPluginOptions extends LayerOptions {
+  final String text;
+  MyCustomPluginOptions({
+    Key key,
+    this.text = '',
+    rebuild,
+  }) : super(key: key, rebuild: rebuild);
+}
+
+class MyCustomPlugin implements MapPlugin {
+  @override
+  Widget createLayer(
+      LayerOptions options, MapState mapState, Stream<Null> stream) {
+    if (options is MyCustomPluginOptions) {
+      var style = TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 24.0,
+        color: Colors.red,
+      );
+      return Text(
+        options.text,
+        key: options.key,
+        style: style,
+      );
+    }
+    throw Exception('Unknown options type for MyCustom'
+        'plugin: $options');
+  }
+
+  @override
+  bool supportsLayer(LayerOptions options) {
+    return options is MyCustomPluginOptions;
+  }
+}

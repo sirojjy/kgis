@@ -1,0 +1,163 @@
+import 'package:bpjtteknik/utils/colors.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map/plugin_api.dart';
+import 'package:latlong/latlong.dart';
+import 'package:proj4dart/proj4dart.dart' as proj4;
+
+class TestMapPage extends StatefulWidget {
+  static const String route = 'custom_crs';
+
+  @override
+  _TestMapPageState createState() => _TestMapPageState();
+}
+
+class _TestMapPageState extends State<TestMapPage> {
+  final keyText = GlobalKey();
+  Size size;
+  Offset position;
+
+  MapController mapController;
+
+  Proj4Crs epsg3413CRS;
+  Proj4Crs epsg4326CRS;
+
+  int width;
+  int height;
+
+  String basemap;
+  List<String> basemapSubdomain;
+
+  proj4.Point point = proj4.Point(x: -7.39139558847656, y: 111.07967376708984);
+
+  String initText = 'Map centered to';
+
+  proj4.Projection epsg4326;
+
+  @override
+  void initState() {
+    super.initState();
+    mapController = MapController();
+    epsg4326 = proj4.Projection('EPSG:4326');
+  }
+
+  _onTapDown(TapDownDetails details) {
+    var x = details.globalPosition.dx;
+    var y = details.globalPosition.dy;
+
+    var north = mapController.bounds.north;
+    var east  = mapController.bounds.east;
+    var south = mapController.bounds.south;
+    var west = mapController.bounds.west;
+
+    // or user the local position method to get the offset
+    print("http://103.6.53.254:13480/kgis/index.php/wms/info/bpjt:Solo - Ngawi/$west~$south~$east~$north/$width/$height/${point.y}/${point.x}");
+    // /wmts?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&SRS=EPSG:4326&BBOX=${west},${south},${east},${north}&WIDTH=${width}&HEIGHT=${height}&QUERY_LAYERS=States&X=${x}&Y=${y}&FORMAT=application/json&");
+    print(details.localPosition);
+    print("tap down " + x.toString() + ", " + y.toString());
+  }
+
+  _onTapUp(TapUpDetails details) {
+    var x = details.globalPosition.dx;
+    var y = details.globalPosition.dy;
+    // or user the local position method to get the offset
+    print(details.localPosition);
+    print("tap up " + x.toString() + ", " + y.toString());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    width = MediaQuery.of(context).size.width.toInt();
+    height = MediaQuery.of(context).size.height.toInt();
+    // print(mapController.bounds);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Testing'),
+        backgroundColor: colorPrimary,
+      ),
+      body: GestureDetector(
+        onTap: () => print('tapped!'),
+        onTapDown: (TapDownDetails details) => _onTapDown(details),
+        onTapUp: (TapUpDetails details) => _onTapUp(details),
+        child: Center(
+          child: Container(
+            child: Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(top: 8.0, bottom: 2.0),
+                    child: Text(
+                      '$initText (${point.x.toStringAsFixed(5)}, ${point.y.toStringAsFixed(5)}) in EPSG:4326.',
+                    ),
+                  ),
+
+                  Padding(
+                    padding: EdgeInsets.only(top: 8.0, bottom: 2.0),
+                    child: Text(
+                      position != null ? '$initText (${position.dx.toString()}, ${position.dy.toString()}) POSITION.' : "Loading...",
+                    ),
+                  ),
+
+                  Padding(
+                    padding: EdgeInsets.only(top: 8.0, bottom: 2.0),
+                    child: Text(
+                      position != null ? '$initText (${size.width.toString()}, ${size.height.toString()}) HEIGHT.' : "Loading...",
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(top: 2.0, bottom: 8.0),
+                    child: Text('Tap on map to get more coordinates!'),
+                  ),
+                  Flexible(
+                    child: 
+                      FlutterMap(
+                          key: keyText,
+                          mapController: mapController,
+                          options: MapOptions(
+                            crs: Epsg4326(),
+                            center: LatLng(point.x, point.y),
+                            zoom: 4,
+                            onTap: (p) => setState(() {
+                              // print(p.latitude);
+                              // print(p.longitude);
+                              initText = 'You clicked at';
+                              point = proj4.Point(x: p.latitude, y: p.longitude);
+                            }),
+                            // onTap: (p) {
+                            //   final RenderBox box = keyText.currentContext.findRenderObject();
+                            //   position = box.localToGlobal(Offset.zero);
+                            // }
+                          ),
+                          layers: [
+                            TileLayerOptions(
+                              wmsOptions: WMSTileLayerOptions(
+                                crs: Epsg4326(),
+                                baseUrl: 'https://tiles.maps.eox.at/?',
+                                layers: ['s2cloudless-2019', 'overlay_base'],
+                              ),
+                            ),
+                            TileLayerOptions(
+                              backgroundColor: Colors.transparent,
+                              wmsOptions: WMSTileLayerOptions(
+                                // Set the WMS layer's CRS
+                                crs: Epsg4326(),
+                                transparent: true,
+                                format: 'image/png',
+                                baseUrl:
+                                    'http://103.6.53.254:13480/geoserver/bpjt/wms?',
+                                layers: ['bpjt:Solo - Ngawi'],
+                              ),
+                            ),
+                          ],
+                        )
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      )
+    );
+  }
+}
