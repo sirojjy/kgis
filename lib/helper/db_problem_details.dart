@@ -4,8 +4,8 @@ import 'dart:async';
 import 'db.dart';
 
 class DbProblemDetails {
-  static DbProblemDetails _dbProblemDetails;
-  static Database _database;  
+  static DbProblemDetails? _dbProblemDetails;
+  static Database? _database;
 
   static final columnIsSync = 'is_sync';
 
@@ -15,7 +15,7 @@ class DbProblemDetails {
     if (_dbProblemDetails == null) {
       _dbProblemDetails = DbProblemDetails._createObject();
     }
-    return _dbProblemDetails;
+    return _dbProblemDetails!;
   }
 
   Future<Database> get database async {
@@ -23,7 +23,7 @@ class DbProblemDetails {
     if (_database == null) {
       _database = await db.init();
     }
-    return _database;
+    return _database!;
   }
 
   Future<List<Map<String, dynamic>>> select() async {

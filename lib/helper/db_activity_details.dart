@@ -1,13 +1,10 @@
 import 'package:sqflite/sqflite.dart';
 import 'dart:async';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-
 import 'db.dart';
 
 class DbActivityDetails {
-  static DbActivityDetails _dbActivityDetails;
-  static Database _database;  
+  static DbActivityDetails? _dbActivityDetails;
+  static Database? _database;
 
   static final columnIsSync = 'is_sync';
 
@@ -17,7 +14,7 @@ class DbActivityDetails {
     if (_dbActivityDetails == null) {
       _dbActivityDetails = DbActivityDetails._createObject();
     }
-    return _dbActivityDetails;
+    return _dbActivityDetails!;
   }
 
   Future<Database> get database async {
@@ -25,7 +22,7 @@ class DbActivityDetails {
     if (_database == null) {
       _database = await db.init();
     }
-    return _database;
+    return _database!;
   }
 
   Future<List<Map<String, dynamic>>> select() async {

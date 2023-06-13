@@ -1,5 +1,5 @@
-import 'package:bpjtteknik/helper/db_segments.dart';
-import 'package:bpjtteknik/utils/utils.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/db_segments.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/util.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:async';
 import 'dart:io';

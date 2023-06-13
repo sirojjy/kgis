@@ -1,12 +1,12 @@
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/helper/db.dart';
-import 'package:package_info/package_info.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:async';
+import 'db.dart';
 
 class DbSegments {
-  static DbSegments _dbSegments;
-  static Database _database;
+  static DbSegments? _dbSegments;
+  static Database? _database;
 
   DbSegments._createObject();
 
@@ -26,7 +26,7 @@ class DbSegments {
     if (_dbSegments == null) {
       _dbSegments = DbSegments._createObject();
     }
-    return _dbSegments;
+    return _dbSegments!;
   }
 
   Future<Database> get database async {
@@ -34,7 +34,7 @@ class DbSegments {
     if (_database == null) {
       _database = await db.init();
     }
-    return _database;
+    return _database!;
   }
 
   Future<List<Map<String, dynamic>>> select() async {

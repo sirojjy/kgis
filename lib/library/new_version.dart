@@ -6,7 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Information about the app's current version, and the most recent version
@@ -49,10 +49,10 @@ class VersionStatus {
   }
 
   VersionStatus._({
-    this.localVersion,
-    this.storeVersion,
-    this.appStoreLink,
-    this.releaseNotes,
+    required this.localVersion,
+    required this.storeVersion,
+    required this.appStoreLink,
+    required this.releaseNotes,
   });
 }
 
@@ -79,23 +79,27 @@ class NewVersion {
   final String forceAppVersion;
 
   NewVersion({
-    this.androidId,
-    this.iOSId,
-    this.iOSAppStoreCountry,
-    this.forceAppVersion,
+    required this.androidId,
+    required this.iOSId,
+    required this.iOSAppStoreCountry,
+    required this.forceAppVersion,
   });
 
   /// This checks the version status, then displays a platform-specific alert
   /// with buttons to dismiss the update alert, or go to the app store.
-  showAlertIfNecessary({BuildContext context}) async {
+  showAlertIfNecessary({required BuildContext context}) async {
     final VersionStatus versionStatus = await getVersionStatus();
     print(versionStatus.localVersion);
     print(versionStatus.storeVersion);
     print(versionStatus.releaseNotes);
     print(versionStatus.appStoreLink);
     print(versionStatus.canUpdate);
-    if (versionStatus != null && versionStatus.canUpdate) {
-      showUpdateDialog(context: context, versionStatus: versionStatus);
+    if (versionStatus.canUpdate) {
+      showUpdateDialog(
+          context: context,
+          versionStatus: versionStatus,
+          dialogText: 'update', dismissAction: () {  }
+      );
     }
   }
 
@@ -111,6 +115,7 @@ class NewVersion {
     } else {
       debugPrint(
           'The target platform "${Platform.operatingSystem}" is not yet supported by this package.');
+      throw UnsupportedError('Unsupported platform');
     }
   }
 
@@ -131,13 +136,13 @@ class NewVersion {
     final response = await http.get(uri);
     if (response.statusCode != 200) {
       debugPrint('Failed to query iOS App Store');
-      return null;
+      throw Exception('Failed to query iOS App Store');
     }
     final jsonObj = json.decode(response.body);
     final List results = jsonObj['results'];
     if (results.isEmpty) {
       debugPrint('Can\'t find an app in the App Store with the id: $id');
-      return null;
+      throw Exception('Can\'t find an app in the App Store with the id: $id');
     }
     return VersionStatus._(
       localVersion: _getCleanVersion(packageInfo.version),
@@ -157,24 +162,24 @@ class NewVersion {
     final response = await http.get(uri);
     if (response.statusCode != 200) {
       debugPrint('Can\'t find an app in the Play Store with the id: $id');
-      return null;
+      throw Exception('Can\'t find an app in the App Store with the id: $id');
     }
     final document = parse(response.body);
     
     String storeVersion = '0.0.0';
-    String releaseNotes;
+    String? releaseNotes;
 
     final additionalInfoElements = document.getElementsByClassName('hAyfc');
 
     if (additionalInfoElements.isNotEmpty) {
       final versionElement = additionalInfoElements.firstWhere(
-            (elm) => elm.querySelector('.BgcNfc').text == 'Current Version',
+            (elm) => elm.querySelector('.BgcNfc')?.text == 'Current Version',
       );
-      storeVersion = versionElement.querySelector('.htlgb').text;
+      storeVersion = versionElement.querySelector('.htlgb')?.text ?? '0.0.0';
 
       final sectionElements = document.getElementsByClassName('W4P4ne');
       final releaseNotesElement = sectionElements.firstWhere(
-            (elm) => elm.querySelector('.wSaTQd').text == 'What\'s New',
+            (elm) => elm.querySelector('.wSaTQd')?.text == 'What\'s New',
       );
       releaseNotes = releaseNotesElement
           ?.querySelector('.PHBdkd')
@@ -201,9 +206,9 @@ class NewVersion {
 
     return VersionStatus._(
       localVersion: _getCleanVersion(packageInfo.version),
-      storeVersion: _getCleanVersion(forceAppVersion ?? storeVersion),
+      storeVersion: _getCleanVersion(forceAppVersion),
       appStoreLink: uri.toString(),
-      releaseNotes: releaseNotes,
+      releaseNotes: releaseNotes!,
     );
   }
 
@@ -214,14 +219,14 @@ class NewVersion {
   /// optionally provide [dialogTitle], [dialogText], [updateButtonText],
   /// [dismissButtonText], and [dismissAction] parameters.
   void showUpdateDialog({
-    BuildContext context,
-    VersionStatus versionStatus,
+    required BuildContext context,
+    required VersionStatus versionStatus,
     String dialogTitle = 'Update Available',
-    String dialogText,
+    required String dialogText,
     String updateButtonText = 'Update',
     bool allowDismissal = true,
     String dismissButtonText = 'Maybe Later',
-    VoidCallback dismissAction,
+    required VoidCallback dismissAction,
   }) async {
     final dialogTitleWidget = Text(dialogTitle);
     final dialogTextWidget = Text(
@@ -230,22 +235,22 @@ class NewVersion {
     );
 
     final updateButtonTextWidget = Text(updateButtonText);
-    final updateAction = () {
+    updateAction() {
       launchAppStore(versionStatus.appStoreLink);
       if (allowDismissal) {
         Navigator.of(context, rootNavigator: true).pop();
       }
-    };
+    }
 
     List<Widget> actions = [
       Platform.isAndroid
           ? TextButton(
-              child: updateButtonTextWidget,
               onPressed: updateAction,
+              child: updateButtonTextWidget,
             )
           : CupertinoDialogAction(
-              child: updateButtonTextWidget,
               onPressed: updateAction,
+              child: updateButtonTextWidget,
             ),
     ];
 

@@ -1,17 +1,14 @@
-import 'dart:convert';
 import 'dart:io';
-
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:async';
-
+import '../conn/API.dart';
 import 'db.dart';
 
 class DbPresences {
-  static DbPresences _dbPresences;
-  static Database _database;  
+  static DbPresences? _dbPresences;
+  static Database? _database;
 
   static final columnIsSync = 'is_sync';
 
@@ -33,14 +30,14 @@ class DbPresences {
     if (_dbPresences == null) {
       _dbPresences = DbPresences._createObject();
     }
-    return _dbPresences;
+    return _dbPresences!;
   }
 
   Future<int> getCount() async {
       //database connection
       Database db = await this.database;
       var x = await db.rawQuery("SELECT COUNT (*) from presences WHERE status = 'in' OR status = 'out'");
-      int count = Sqflite.firstIntValue(x);
+      int count = Sqflite.firstIntValue(x)!;
       return count;
   }
 
@@ -48,7 +45,7 @@ class DbPresences {
       //database connection
       Database db = await this.database;
       var x = await db.rawQuery("SELECT COUNT (*) from presences WHERE status = 'in' AND date = '"+date+"'");
-      int count = Sqflite.firstIntValue(x);
+      int count = Sqflite.firstIntValue(x)!;
       return count;
   }
 
@@ -64,7 +61,7 @@ class DbPresences {
     Database db = await openDatabase(pathActivity);
     print("ASDASD");
     var x = await db.rawQuery("SELECT COUNT (*) from presences WHERE (status = 'in' OR status = 'permit') AND date = '"+date+"'");
-    int count = Sqflite.firstIntValue(x);
+    int count = Sqflite.firstIntValue(x)!;
 
     return count;
   }
@@ -73,7 +70,7 @@ class DbPresences {
       //database connection
       Database db = await this.database;
       var x = await db.rawQuery("SELECT COUNT (*) from presences WHERE status = 'permit' AND date = '"+date+"'");
-      int count = Sqflite.firstIntValue(x);
+      int count = Sqflite.firstIntValue(x)!;
       return count;
   }
 
@@ -82,7 +79,7 @@ class DbPresences {
     if (_database == null) {
       _database = await db.init();
     }
-    return _database;
+    return _database!;
   }
 
   Future<List<Map<String, dynamic>>> select() async {

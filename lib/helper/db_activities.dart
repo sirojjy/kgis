@@ -1,17 +1,13 @@
-import 'dart:convert';
-
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/helper/db.dart';
-import 'package:bpjtteknik/helper/db_activity_details.dart';
-import 'package:package_info/package_info.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/db_activity_details.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/db.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:async';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 
 class DbActivities {
-  static DbActivities _dbActivities;
-  static Database _database;
+  static DbActivities? _dbActivities;
+  static Database? _database;
   
   DbActivityDetails dbActivityDetail = DbActivityDetails();
 
@@ -35,7 +31,7 @@ class DbActivities {
     if (_dbActivities == null) {
       _dbActivities = DbActivities._createObject();
     }
-    return _dbActivities;
+    return _dbActivities!;
   }
 
   Future<Database> get database async {
@@ -43,7 +39,7 @@ class DbActivities {
     if (_database == null) {
       _database = await db.init();
     }
-    return _database;
+    return _database!;
   }
 
   Future<List<Map<String, dynamic>>> select() async {

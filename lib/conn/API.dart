@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:bpjtteknik/helper/db_segments.dart';
-import 'package:bpjtteknik/utils/utils.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:http/http.dart' as http;
+import '../helper/db_segments.dart';
+import '../utils/util.dart';
 
 const baseUrl = "http://103.6.53.254:13480/bpjt-teknik/public/index.php/api";
 // const baseUrl = "http://192.168.100.4:8000/api";
@@ -12,7 +12,7 @@ const baseUrl = "http://103.6.53.254:13480/bpjt-teknik/public/index.php/api";
 class API {
   static Future authorize(String email, String password, String fcmToken, bool isLogout, String version) async {
 
-    var url = baseUrl + '/authorizes';
+    var url = Uri.parse(baseUrl + '/authorizes');
     
     var data = json.encode({
       "email": email,
@@ -37,23 +37,23 @@ class API {
   static Future getAllTrackingProblems(String date, String segment, String userId, String role, String region, String version) async {
     var url = baseUrl + '/tracking_problems?all=true&is_hidden=false&';
     
-    if (date != '' && date != null) {
+    if (date != '') {
       url = url + 'date='+date.toString()+'&';
     }
 
-    if (segment != '' && segment != null) {
+    if (segment != '') {
       url = url + 'segment='+segment.toString()+'&';
     }
 
-    if (userId != '' && userId != null) {
+    if (userId != '') {
       url = url + 'user_id='+userId.toString()+'&';
     }
 
-    if (role != '' && role != null) {
+    if (role != '') {
       url = url + 'role='+role.toString()+'&';
     }
 
-    if (region != '' && region != null) {
+    if (region != '') {
       url = url + 'region='+region.toString()+'&';
     }
 
@@ -65,7 +65,7 @@ class API {
       'Accept': 'application/json'
     };
 
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -75,23 +75,23 @@ class API {
   static Future getAllActivities(String date, String segment, String userId, String role, String region, String version) async {
     var url = baseUrl + '/activities?all=true&is_hidden=false&';
     
-    if (date != '' && date != null) {
+    if (date != '') {
       url = url + 'date='+date.toString()+'&';
     }
 
-    if (segment != '' && segment != null) {
+    if (segment != '') {
       url = url + 'segment='+segment.toString()+'&';
     }
 
-    if (userId != '' && userId != null) {
+    if (userId != '') {
       url = url + 'user_id='+userId.toString()+'&';
     }
 
-    if (role != '' && role != null) {
+    if (role != '') {
       url = url + 'role='+role.toString()+'&';
     }
 
-    if (region != '' && region != null) {
+    if (region != '') {
       url = url + 'region='+region.toString()+'&';
     }
 
@@ -103,7 +103,7 @@ class API {
       'Accept': 'application/json'
     };
     print(url);
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -113,39 +113,39 @@ class API {
   static Future getTrackingProblems(int page, String dateFrom, String dateTo, String segment, String userId, String position, String name, String role, String region, String version) async {
     var url = baseUrl + '/tracking_problems?is_hidden=false&';
 
-    if (page != null && page > 0) {
+    if (page > 0) {
       url = url + 'page='+page.toString()+'&';
     }
     
-    if (dateFrom != '' && dateFrom != null) {
+    if (dateFrom != '') {
       url = url + 'date[\$gte]='+dateFrom.toString()+'&';
     }
 
-    if (dateTo != '' && dateTo != null) {
+    if (dateTo != '') {
       url = url + 'date[\$lte]='+dateTo.toString()+'&';
     }
 
-    if (segment != '' && segment != null) {
+    if (segment != '') {
       url = url + 'segment='+segment.toString()+'&';
     }
 
-    if (userId != '' && userId != null) {
+    if (userId != '') {
       url = url + 'user_id='+userId.toString()+'&';
     }
 
-    if (position != '' && position != null) {
+    if (position != '') {
       url = url + 'position='+position.toString()+'&';
     }
 
-    if (name != '' && name != null) {
+    if (name != '') {
       url = url + 'name='+name.toString()+'&';
     }
 
-    if (role != '' && role != null) {
+    if (role != '') {
       url = url + 'role='+role.toString()+'&';
     }
 
-    if (region != '' && region != null) {
+    if (region != '') {
       url = url + 'region='+region.toString()+'&';
     }
     
@@ -155,7 +155,7 @@ class API {
       'Accept': 'application/json'
     };
 
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     print(url);
 
@@ -167,39 +167,39 @@ class API {
   static Future getActivities(int page, String dateFrom, String dateTo, String segment, String userId, String position, String name, String role, String region, String version) async {
     var url = baseUrl + '/activities?';
 
-    if (page != null && page > 0) {
+    if (page > 0) {
       url = url + 'page='+page.toString()+'&';
     }
     
-    if (dateFrom != '' && dateFrom != null) {
+    if (dateFrom != '') {
       url = url + 'date[\$gte]='+dateFrom.toString()+'&';
     }
 
-    if (dateTo != '' && dateTo != null) {
+    if (dateTo != '') {
       url = url + 'date[\$lte]='+dateTo.toString()+'&';
     }
 
-    if (segment != '' && segment != null) {
+    if (segment != '') {
       url = url + 'segment='+segment.toString()+'&';
     }
 
-    if (userId != '' && userId != null) {
+    if (userId != '') {
       url = url + 'user_id='+userId.toString()+'&';
     }
 
-    if (position != '' && position != null) {
+    if (position != '') {
       url = url + 'position='+position.toString()+'&';
     }
 
-    if (name != '' && name != null) {
+    if (name != '') {
       url = url + 'name='+name.toString()+'&';
     }
 
-    if (role != '' && role != null) {
+    if (role != '') {
       url = url + 'role='+role.toString()+'&';
     }
 
-    if (region != '' && region != null) {
+    if (region != '') {
       url = url + 'region='+region.toString()+'&';
     }
 
@@ -211,7 +211,7 @@ class API {
     
     print(url);
     
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -229,7 +229,7 @@ class API {
       'Accept': 'application/json'
     };
   
-    final response = await http.post(url, body: data, headers: headers);
+    final response = await http.post(url as Uri, body: data, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -281,19 +281,19 @@ class API {
       url = url + 'is_approve=false&';
     }
 
-    if (page != null && page > 0) {
+    if (page > 0) {
       url = url + 'page='+page.toString()+'&';
     }
 
-    if (companyField != '' && companyField != null) {
+    if (companyField != '') {
       url = url + 'company_field='+companyField.toString()+'&';
     }
 
-    if (segment != '' && segment != null) {
+    if (segment != '') {
       url = url + 'segment='+segment.toString()+'&';
     }
 
-    if (params != "" && params != null && params != 'null') {
+    if (params != "" && params != 'null') {
       url = url + 'name='+params+'&' + 'company='+params+'&' + 'phone='+params+'&' + 'email='+params+'&';
     }
 
@@ -304,7 +304,7 @@ class API {
       'Accept': 'application/json'
     };
     print(url);
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -324,7 +324,7 @@ class API {
       'Accept': 'application/json'
     };
     
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -340,7 +340,7 @@ class API {
       'Accept': 'application/json'
     };
     print(url);
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -356,11 +356,11 @@ class API {
       'Accept': 'application/json'
     };
 
-    if (status != '' && status != null) {
+    if (status != '') {
       url = url + 'status='+status.toString()+'&';
     }
     
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -376,15 +376,15 @@ class API {
       'Accept': 'application/json'
     };
 
-    if (status != '' && status != null) {
+    if (status != '') {
       url = url + 'status='+status.toString()+'&';
     }
 
-    if (subStatus != '' && subStatus != null) {
+    if (subStatus != '') {
       url = url + 'sub_status='+subStatus.toString()+'&';
     }
     print(url);
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -401,19 +401,19 @@ class API {
       'Accept': 'application/json'
     };
 
-    if (status != '' && status != null) {
+    if (status != '') {
       url = url + 'status='+status.toString()+'&';
     }
 
-    if (subStatus != '' && subStatus != null) {
+    if (subStatus != '') {
       url = url + 'sub_status='+subStatus.toString()+'&';
     }
 
-    if (region != '' && region != null) {
+    if (region != '') {
       url = url + 'region='+region.toString()+'&';
     }
 
-    if (isGroup != '' && isGroup != null) {
+    if (isGroup != '') {
       url = url + 'is_group='+isGroup.toString()+'&';
       if (!await Utils.checkServerStatus("google.com")) {
         List res = [];
@@ -429,7 +429,7 @@ class API {
       }
     }
     print(url);
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
     print(ret);
@@ -446,23 +446,23 @@ class API {
       'Accept': 'application/json'
     };
 
-    if (status != '' && status != null) {
+    if (status != '') {
       url = url + 'status='+status.toString()+'&';
     }
 
-    if (subStatus != '' && subStatus != null) {
+    if (subStatus != '') {
       url = url + 'sub_status='+subStatus.toString()+'&';
     }
 
-    if (region != '' && region != null) {
+    if (region != '') {
       url = url + 'region='+region.toString()+'&';
     }
 
-    if (segment != '' && segment != null) {
+    if (segment != '') {
       url = url + 'segment='+segment.toString()+'&';
     }
 
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
     print(url);
     var ret = json.decode(response.body);
 
@@ -472,7 +472,7 @@ class API {
   static Future getFeatureServer(String destUrl, String type, String key, String version) async {
     var url = destUrl + '/query?f=json&geometry=&maxRecordCountFactor=30&outFields=*&outSR=4326&resultType=tile&returnExceededLimitFeatures=false&spatialRel=esriSpatialRelIntersects&where=1=1&geometryType=esriGeometryEnvelope';
 
-    final response = await http.get(url);
+    final response = await http.get(url as Uri);
 
     var ret = json.decode(response.body);
 
@@ -492,7 +492,7 @@ class API {
       'Accept': 'application/json'
     };
     print(data);
-    final response = await http.post(url, body: data, headers: headers);
+    final response = await http.post(url as Uri, body: data, headers: headers);
     print(url);
     var ret = json.decode(response.body);
     
@@ -546,10 +546,11 @@ class API {
 
     if (filePath != "/") {
       if (!(files.toString()).contains(".pdf")) {
-        ImageProperties properties = await FlutterNativeImage.getImageProperties(files);
-        File compressedFile = await FlutterNativeImage.compressImage(files, quality: 80, 
-            targetWidth: 800, 
-            targetHeight: (properties.height * 800 / properties.width).round());
+        ImageProperties? properties = await FlutterNativeImage.getImageProperties(files);
+        File compressedFile = await FlutterNativeImage.compressImage(files, quality: 80,
+            targetWidth: 800,
+            targetHeight: (properties?.height ?? 0 * 800 / (properties?.width ?? 1)).round()
+        );
         filePath = compressedFile.path;
       }
           
@@ -571,39 +572,39 @@ class API {
   static Future getAttendances(String time, String userId, String segment, String position, String dateFrom, String dateTo, int page, String name, String region, String version) async {
     var url = baseUrl + '/attendances?';
 
-    if (time != '' && time != null) {
+    if (time != '') {
       url = url + 'time='+time.toString()+'&';
     }
 
-    if (userId != '' && userId != null) {
+    if (userId != '') {
       url = url + 'user_id='+userId.toString()+'&';
     }
 
-    if (page != null && page > 0) {
+    if (page > 0) {
       url = url + 'page='+page.toString()+'&';
     }
 
-    if (dateFrom != '' && dateFrom != null) {
+    if (dateFrom != '') {
       url = url + 'time[\$gte]='+dateFrom.toString()+'&';
     }
 
-    if (dateTo != '' && dateTo != null) {
+    if (dateTo != '') {
       url = url + 'time[\$lte]='+dateTo.toString()+'&';
     }
 
-    if (segment != '' && segment != null) {
+    if (segment != '') {
       url = url + 'segment='+segment.toString()+'&';
     }
 
-    if (region != '' && region != null) {
+    if (region != '') {
       url = url + 'region='+region.toString()+'&';
     }
 
-    if (position != '' && position != null) {
+    if (position != '') {
       url = url + 'position='+position.toString()+'&';
     }
 
-    if (name != '' && name != null) {
+    if (name != '') {
       url = url + 'name='+name.toString()+'&';
     }
 
@@ -613,7 +614,7 @@ class API {
       'Accept': 'application/json'
     };
 
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -623,39 +624,39 @@ class API {
   static Future getAttendancesAll(String time, String userId, String segment, String position, String dateFrom, String dateTo, int page, String name, String region, String version) async {
     var url = baseUrl + '/attendances?all=true&';
 
-    if (time != '' && time != null) {
+    if (time != '') {
       url = url + 'time='+time.toString()+'&';
     }
 
-    if (userId != '' && userId != null) {
+    if (userId != '') {
       url = url + 'user_id='+userId.toString()+'&';
     }
 
-    if (page != null && page > 0) {
+    if (page > 0) {
       url = url + 'page='+page.toString()+'&';
     }
 
-    if (dateFrom != '' && dateFrom != null) {
+    if (dateFrom != '') {
       url = url + 'time[\$gte]='+dateFrom.toString()+'&';
     }
 
-    if (dateTo != '' && dateTo != null) {
+    if (dateTo != '') {
       url = url + 'time[\$lte]='+dateTo.toString()+'&';
     }
 
-    if (segment != '' && segment != null) {
+    if (segment != '') {
       url = url + 'segment='+segment.toString()+'&';
     }
 
-    if (region != '' && region != null) {
+    if (region != '') {
       url = url + 'region='+region.toString()+'&';
     }
 
-    if (position != '' && position != null) {
+    if (position != '') {
       url = url + 'position='+position.toString()+'&';
     }
 
-    if (name != '' && name != null) {
+    if (name != '') {
       url = url + 'name='+name.toString()+'&';
     }
 
@@ -667,7 +668,7 @@ class API {
 
     print(url);
     
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -677,35 +678,35 @@ class API {
   static Future getUsersAll(int page, String segment, String position, String dateFrom, String dateTo, String name, String region, String companyField, String version) async {
     var url = baseUrl + '/users?';
 
-    if (page != null && page > 0) {
+    if (page > 0) {
       url = url + 'page='+page.toString()+'&';
     }
 
-    if (dateFrom != '' && dateFrom != null) {
+    if (dateFrom != '') {
       url = url + 'created_at[\$gte]='+dateFrom.toString()+'&';
     }
 
-    if (dateTo != '' && dateTo != null) {
+    if (dateTo != '') {
       url = url + 'created_at[\$lte]='+dateTo.toString()+'&';
     }
 
-    if (segment != '' && segment != null) {
+    if (segment != '') {
       url = url + 'segment='+segment.toString()+'&';
     }
 
-    if (region != '' && region != null) {
+    if (region != '') {
       url = url + 'region='+region.toString()+'&';
     }
 
-    if (position != '' && position != null) {
+    if (position != '') {
       url = url + 'position='+position.toString()+'&';
     }
 
-    if (name != '' && name != null) {
+    if (name != '') {
       url = url + 'name='+name.toString()+'&';
     }
 
-    if (companyField != '' && companyField != null) {
+    if (companyField != '') {
       url = url + 'company_field='+companyField.toString()+'&';
     }
 
@@ -715,7 +716,7 @@ class API {
       'Accept': 'application/json'
     };
     print(url);
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -725,27 +726,27 @@ class API {
   static Future getRecaps(int page, String segment, String position, String dateFrom, String dateTo, String name, String version) async {
     var url = baseUrl + '/recaps?';
 
-    if (page != null && page > 0) {
+    if (page > 0) {
       url = url + 'page='+page.toString()+'&';
     }
 
-    if (dateFrom != '' && dateFrom != null) {
+    if (dateFrom != '') {
       url = url + 'date_from='+dateFrom.toString()+'&';
     }
 
-    if (dateTo != '' && dateTo != null) {
+    if (dateTo != '') {
       url = url + 'date_to='+dateTo.toString()+'&';
     }
 
-    if (segment != '' && segment != null) {
+    if (segment != '') {
       url = url + 'segment='+segment.toString()+'&';
     }
 
-    if (position != '' && position != null) {
+    if (position != '') {
       url = url + 'position='+position.toString()+'&';
     }
 
-    if (name != '' && name != null) {
+    if (name != '') {
       url = url + 'name='+name.toString()+'&';
     }
 
@@ -755,7 +756,7 @@ class API {
       'Accept': 'application/json'
     };
 
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
     print(url);
     var ret = json.decode(response.body);
 
@@ -815,7 +816,7 @@ class API {
       'Accept': 'application/json'
     };
 
-    final response = await http.patch(url, body: data, headers: headers);
+    final response = await http.patch(url as Uri, body: data, headers: headers);
 
     var ret = json.decode(response.body);
     
@@ -834,7 +835,7 @@ class API {
       'Accept': 'application/json'
     };
 
-    final response = await http.patch(url, body: data, headers: headers);
+    final response = await http.patch(url as Uri, body: data, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -844,19 +845,19 @@ class API {
   static Future getSummaryData(String dateFrom, String dateTo, String region, String segment, String version) async {
     var url = baseUrl + '/dashboards/data_summary?';
 
-    if (dateFrom != '' && dateFrom != null) {
+    if (dateFrom != '') {
       url = url + 'date_from='+dateFrom.toString()+'&';
     }
 
-    if (dateTo != '' && dateTo != null) {
+    if (dateTo != '') {
       url = url + 'date_to='+dateTo.toString()+'&';
     }
 
-    if (region != '' && region != null) {
+    if (region != '') {
       url = url + 'region='+region.toString()+'&';
     }
 
-    if (segment != '' && segment != null) {
+    if (segment != '') {
       url = url + 'segment='+segment.toString()+'&';
     }
 
@@ -866,7 +867,7 @@ class API {
       'Accept': 'application/json'
     };
 
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -876,19 +877,19 @@ class API {
   static Future getTotalUserPerCategory(String dateFrom, String dateTo, String region, String segment, String version) async {
     var url = baseUrl + '/dashboards/total_user_per_category?';
 
-    if (dateFrom != '' && dateFrom != null) {
+    if (dateFrom != '') {
       url = url + 'date_from='+dateFrom.toString()+'&';
     }
 
-    if (dateTo != '' && dateTo != null) {
+    if (dateTo != '') {
       url = url + 'date_to='+dateTo.toString()+'&';
     }
 
-    if (region != '' && region != null) {
+    if (region != '') {
       url = url + 'region='+region.toString()+'&';
     }
 
-    if (segment != '' && segment != null) {
+    if (segment != '') {
       url = url + 'segment='+segment.toString()+'&';
     }
 
@@ -898,7 +899,7 @@ class API {
       'Accept': 'application/json'
     };
 
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -908,11 +909,11 @@ class API {
   static Future getActivityChart(String dateFrom, String dateTo, String version) async {
     var url = baseUrl + '/charts/activity?';
 
-    if (dateFrom != '' && dateFrom != null) {
+    if (dateFrom != '') {
       url = url + 'date_from='+dateFrom.toString()+'&';
     }
 
-    if (dateTo != '' && dateTo != null) {
+    if (dateTo != '') {
       url = url + 'date_to='+dateTo.toString()+'&';
     }
 
@@ -922,7 +923,7 @@ class API {
       'Accept': 'application/json'
     };
 
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -932,11 +933,11 @@ class API {
   static Future getProblemChart(String dateFrom, String dateTo, String version) async {
     var url = baseUrl + '/charts/problem?';
 
-    if (dateFrom != '' && dateFrom != null) {
+    if (dateFrom != '') {
       url = url + 'date_from='+dateFrom.toString()+'&';
     }
 
-    if (dateTo != '' && dateTo != null) {
+    if (dateTo != '') {
       url = url + 'date_to='+dateTo.toString()+'&';
     }
 
@@ -946,7 +947,7 @@ class API {
       'Accept': 'application/json'
     };
 
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -956,11 +957,11 @@ class API {
   static Future getAttendanceChart(String dateFrom, String dateTo, String version) async {
     var url = baseUrl + '/charts/attendance?';
 
-    if (dateFrom != '' && dateFrom != null) {
+    if (dateFrom != '') {
       url = url + 'date_from='+dateFrom.toString()+'&';
     }
 
-    if (dateTo != '' && dateTo != null) {
+    if (dateTo != '') {
       url = url + 'date_to='+dateTo.toString()+'&';
     }
 
@@ -970,7 +971,7 @@ class API {
       'Accept': 'application/json'
     };
 
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -980,11 +981,11 @@ class API {
   static Future getUserTotalPerSegmentChart(String companyField, String dateFrom, String dateTo, String version) async {
     var url = baseUrl + '/charts/user_total_per_segment/'+companyField+'?';
 
-    if (dateFrom != '' && dateFrom != null) {
+    if (dateFrom != '') {
       url = url + 'date_from='+dateFrom.toString()+'&';
     }
 
-    if (dateTo != '' && dateTo != null) {
+    if (dateTo != '') {
       url = url + 'date_to='+dateTo.toString()+'&';
     }
 
@@ -994,7 +995,7 @@ class API {
       'Accept': 'application/json'
     };
 
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
 
     var ret = json.decode(response.body);
 
@@ -1007,7 +1008,7 @@ class API {
       'Accept': 'application/json'
     };
 
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
     
     var ret;
 
@@ -1031,7 +1032,7 @@ class API {
       'Accept': 'application/json'
     };
     
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
     
     var ret = json.decode(response.body);
 
@@ -1047,7 +1048,7 @@ class API {
       'Accept': 'application/json'
     };
     
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
     
     var ret = json.decode(response.body);
 
@@ -1062,7 +1063,7 @@ class API {
       'Accept': 'application/json'
     };
 
-    final response = await http.get(url, headers: headers);
+    final response = await http.get(url as Uri, headers: headers);
     print(url);
     var ret = json.decode(response.body);
 

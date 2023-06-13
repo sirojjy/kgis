@@ -1,14 +1,13 @@
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/helper/db_problem_details.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:async';
-
+import '../conn/API.dart';
 import 'db.dart';
+import 'db_problem_details.dart';
 
 class DbProblems {
-  static DbProblems _dbProblems;
-  static Database _database;
+  static DbProblems? _dbProblems;
+  static Database? _database;
   
   DbProblemDetails dbProblemDetail = DbProblemDetails();
 
@@ -32,7 +31,7 @@ class DbProblems {
     if (_dbProblems == null) {
       _dbProblems = DbProblems._createObject();
     }
-    return _dbProblems;
+    return _dbProblems!;
   }
 
   Future<Database> get database async {
@@ -40,7 +39,7 @@ class DbProblems {
     if (_database == null) {
       _database = await db.init();
     }
-    return _database;
+    return _database!;
   }
 
   Future<List<Map<String, dynamic>>> select() async {

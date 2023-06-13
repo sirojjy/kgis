@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class Screen {
-  Size screenSize;
+  late Size screenSize;
 
   Screen._internal();
   Screen(this.screenSize);
