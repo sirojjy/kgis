@@ -1,7 +1,7 @@
-import 'package:art_sweetalert/art_sweetalert.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
 
 String googleBasemapUrl = "http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}";
 List<String> googleBasemapSubdomain = ['mt0','mt1','mt2','mt3'];
