@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
 import 'package:bpjt_k_gis_mobile_master/drawer.dart';
 import 'package:bpjt_k_gis_mobile_master/helper/main_helper.dart';
@@ -8,7 +7,9 @@ import 'package:bpjt_k_gis_mobile_master/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/plugin_api.dart';
-import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart' as clstr;
+// import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart' as clstr;
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -527,9 +528,6 @@ class _MapActivityPageState extends State<MapActivityPage> {
                   crs: const Epsg4326(),
                   center: LatLng(point.x, point.y),
                   zoom: 12,
-                  plugins: [
-                    clstr.MarkerClusterPlugin(),
-                  ],
                   onTap: (tapPosition, LatLng LatLng) => setState(() {
                     point = proj4.Point(x: LatLng.latitude, y: LatLng.longitude);
                     _getFeatureInfo(context, point);
@@ -580,8 +578,7 @@ class _MapActivityPageState extends State<MapActivityPage> {
                       ),
                     ],
                   ),
-
-                  clstr.MarkerClusterLayerOptions(
+                  MarkerClusterLayerOptions(
                     maxClusterRadius: 120,
                     disableClusteringAtZoom: 9,
                     size: const Size(40, 40),
