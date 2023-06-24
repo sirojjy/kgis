@@ -1,23 +1,26 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/helper/db.dart';
-import 'package:bpjtteknik/pdf_viewer.dart';
-import 'package:bpjtteknik/utils/colors.dart';
-import 'package:bpjtteknik/utils/responsive_screen.dart';
-import 'package:bpjtteknik/view/dashboard/dashboard_page.dart';
-import 'package:bpjtteknik/view/recap/recap_search_page.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/db.dart';
+import 'package:bpjt_k_gis_mobile_master/pdf_viewer.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/colors.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/responsive_screen.dart';
+import 'package:bpjt_k_gis_mobile_master/view/dashboard/dashboard_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/recap/recap_search_page.dart';
 import 'package:expandable/expandable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:package_info/package_info.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sweetalert/sweetalert.dart';
+// import 'package:modal_progress_hud/modal_progress_hud.dart';
+// import 'package:package_info/package_info.dart';
+// import 'package:sweetalert/sweetalert.dart';
 
 class RecapPage extends StatefulWidget {
   final segment;
@@ -41,8 +44,8 @@ class RecapPage extends StatefulWidget {
 class _RecapPageState extends State<RecapPage> {
   bool _loading = false;
 
-  int totalData;
-  int currentPage;
+  late int totalData;
+  late int currentPage;
 
   var prefId;
   var prefName;
@@ -53,12 +56,12 @@ class _RecapPageState extends State<RecapPage> {
   var prefRoleId;
   var prefIsApprove;
   var prefSegment;
-  List prefSegments = List();
+  List prefSegments = [];
   
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -107,7 +110,7 @@ class _RecapPageState extends State<RecapPage> {
     prefRoleId = prefs.getString('role_id');
     prefIsApprove = prefs.getBool('is_approve');
     prefSegment = prefs.getString('segment');
-    prefSegments = jsonDecode(prefs.getString('segments'));
+    prefSegments = jsonDecode(prefs.getString('segments')!);
   }
   
   @override
@@ -135,89 +138,120 @@ class _RecapPageState extends State<RecapPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Daftar Rekap'),
+        title: const Text('Daftar Rekap'),
         backgroundColor: colorPrimary,
         actions: [
           GestureDetector(
               onTap: () async {
                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => DashboardPage()));
               },
-              child: Icon(Icons.home, color: Colors.white,),
+              child: const Icon(Icons.home, color: Colors.white,),
           ),
-          SizedBox(width: 10.0,),
+          const SizedBox(width: 10.0,),
           Container(
-            margin: EdgeInsets.only(right: 10.0),
+            margin: const EdgeInsets.only(right: 10.0),
             child: GestureDetector(
               onTap: () async {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => new RecapSearchPage(
+                Navigator.push(context, MaterialPageRoute(builder: (context) => RecapSearchPage(
 
                 )));
               },
-              child: Icon(Icons.search, color: Colors.white,),
+              child: const Icon(Icons.search, color: Colors.white,),
             ),
           ),
           Container(
-            margin: EdgeInsets.only(right: 10.0),
+            margin: const EdgeInsets.only(right: 10.0),
             child: GestureDetector(
               onTap: () async {
-                SweetAlert.show(context,
-                  title: "",
-                  subtitle: "Download sedang berlangsung",
-                  style: SweetAlertStyle.loading
-                );
+                Alert(
+                    context: context,
+                    type: AlertType.info,
+                    title: "",
+                    desc: "Download sedang berlangsung",
+                    buttons: [
+                      DialogButton(
+                        child: const Text("OK"),
+                        onPressed: () {
+                          return;
+                        },
+                      )
+                    ]
+                ).show;
+                // SweetAlert.show(context,
+                //   title: "",
+                //   subtitle: "Download sedang berlangsung",
+                //   style: SweetAlertStyle.loading
+                // );
 
                 createFile("http://103.6.53.254:13480/bpjt-teknik/public/index.php/api/recaps/pdf/download").then((res) async {
-                  final filename = DateTime.now().millisecondsSinceEpoch.toString()+'.pdf';
+                  final filename = '${DateTime.now().millisecondsSinceEpoch}.pdf';
 
-                  Directory dir = await getExternalStorageDirectory();
-                  String path = dir.path;
+                  Directory? dir = await getExternalStorageDirectory();
+                  String? path = dir?.path;
 
-                  path = path.split('0').first;
+                  path = path?.split('0').first;
                   await _createFolder('$path\0/Download/KGIS');
 
-                  File file = res;
+                  ///apakah File nullable?
+                  File? file = res;
 
-                  await file.copy('$path\0/Download/KGIS/$filename');
+                  await file?.copy('$path\0/Download/KGIS/$filename');
 
-                  SweetAlert.show(context,
-                    title: "Sukses",
-                    subtitle: "Ada di folder Internal > Download > KGIS",
-                    style: SweetAlertStyle.success,
-                    onPress: (bool isConfirm) {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => new PdfViewerPage(
-                        pdfPath: res,
-                      )));
-                      return true;
-                    }
-                  );
+                  Alert(
+                      context: context,
+                      type: AlertType.success,
+                      title: "Sukses",
+                      desc: "Ada di folder Internal > Download > KGIS",
+                      buttons: [
+                        DialogButton(
+                          child: const Text("OK"),
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => PdfViewerPage(
+                                pdfPath: res,)));
+                          },
+                        )
+                      ]
+                  ).show;
+                  // SweetAlert.show(context,
+                  //   title: "Sukses",
+                  //   subtitle: "Ada di folder Internal > Download > KGIS",
+                  //   style: SweetAlertStyle.success,
+                  //   onPress: (bool isConfirm) {
+                  //     Navigator.push(context, MaterialPageRoute(builder: (context) => PdfViewerPage(
+                  //       pdfPath: res,
+                  //     )));
+                  //     return true;
+                  //   }
+                  // );
                 });
               },
-              child: Icon(Icons.print, color: Colors.white,),
+              child: const Icon(Icons.print, color: Colors.white,),
             ),
           )
         ],
       ),
       body: ModalProgressHUD(
-        child: _recaps.length < 1 ? noData() : 
+        inAsyncCall: _loading,
+        child: _recaps.isEmpty ? noData() :
           SmartRefresher(
             enablePullDown: true,
             enablePullUp: true,
-            header: WaterDropHeader(),
+            header: const WaterDropHeader(),
             footer: CustomFooter(
-              builder: (BuildContext context,LoadStatus mode){
+              builder: (BuildContext context,LoadStatus? mode){
                 Widget body ;
                 if (mode == LoadStatus.idle) {
-                  body =  Text("pull up load");
+                  body =  const Text("pull up load");
                 } else if (mode == LoadStatus.loading) {
-                  body =  CupertinoActivityIndicator();
+                  body =  const CupertinoActivityIndicator();
                 } else if (mode == LoadStatus.failed) {
-                  body = Text("Load Failed! Click retry!");
+                  body = const Text("Load Failed! Click retry!");
                 } else if (mode == LoadStatus.canLoading) {
-                    body = Text("release to load more");
+                    body = const Text("release to load more");
                 } else {
-                  body = Text("No more Data");
+                  body = const Text("No more Data");
                 }
-                return Container(
+                return SizedBox(
                   height: 55.0,
                   child: Center(child:body),
                 );
@@ -233,7 +267,7 @@ class _RecapPageState extends State<RecapPage> {
                 return GestureDetector(
                   onTap: () => {
                     if (!_recaps[index].isEmpty) {
-                      
+
                     }
                   },
                   child: Container(
@@ -250,18 +284,16 @@ class _RecapPageState extends State<RecapPage> {
                           Container(
                             margin: const EdgeInsets.all(5.0),
                             height: 120.0,
-                            constraints: BoxConstraints(maxWidth: 100.0, minWidth: 100.0),
+                            constraints: const BoxConstraints(maxWidth: 100.0, minWidth: 100.0),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               image: DecorationImage(
                                 fit: BoxFit.cover,
-                                image: 
+                                image:
                                   _recaps[index]["filepath"] != null && _recaps[index]["filename"] != null ?
-                                    NetworkImage(
-                                      "http://103.6.53.254:13480/bpjt-teknik/public"+_recaps[index]["filepath"]+"/"+_recaps[index]["filename"],
-                                  )
-                                  :
-                                  AssetImage('assets/images/person_6x8.png')
+                                    Image.network(
+                                      "${"http://103.6.53.254:13480/bpjt-teknik/public"+_recaps[index]["filepath"]}/"+_recaps[index]["filename"],
+                                  ).image : const AssetImage('assets/images/person_6x8.png')
                               )
                             ),
                             // child: ClipOval(
@@ -285,37 +317,39 @@ class _RecapPageState extends State<RecapPage> {
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text(_recaps[index]["name"], style: TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold)),
+                                      child: Text(_recaps[index]["name"], style: const TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold)),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text(_recaps[index]["position"] ?? '-', style: TextStyle(color: Colors.white, fontSize: 14.0)),
+                                      child: Text(_recaps[index]["position"] ?? '-', style: const TextStyle(color: Colors.white, fontSize: 14.0)),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text("Kewajiban Absensi : ${_recaps[index]["total_user_days"]}x", style: TextStyle(color: Colors.white, fontSize: 14.0)),
+                                      child: Text("Kewajiban Absensi : ${_recaps[index]["total_user_days"]}x", style: const TextStyle(color: Colors.white, fontSize: 14.0)),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text("Absensi : ${_recaps[index]["total_attendance_reported"]}x", style: TextStyle(color: Colors.white, fontSize: 14.0)),
+                                      child: Text("Absensi : ${_recaps[index]["total_attendance_reported"]}x", style: const TextStyle(color: Colors.white, fontSize: 14.0)),
                                     ),
                                   ),
                                   ExpandablePanel(
+                                    ///collapse butuh tindak lanjut
+                                    collapsed: const Text(""),
                                     theme: const ExpandableThemeData(
                                       headerAlignment: ExpandablePanelHeaderAlignment.center,
                                       tapBodyToCollapse: true,
                                     ),
-                                    header: Padding(
-                                        padding: const EdgeInsets.fromLTRB(4.0, 0.0, 4.0, 0.0),
+                                    header: const Padding(
+                                        padding: EdgeInsets.fromLTRB(4.0, 0.0, 4.0, 0.0),
                                         child: Text(
                                           "Klik Untuk Melihat Rekap",
                                           style: TextStyle(color: Colors.white),
@@ -327,17 +361,17 @@ class _RecapPageState extends State<RecapPage> {
                                         return Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text(_recaps[index]['user_segments'][i]['segment'], style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                            SizedBox(height: 5.0),
-                                            Text("Lap. Aktivitas : ${_recaps[index]['user_segments'][i]['total_activity_reported']}x", style: TextStyle(color: Colors.white)),
-                                            Text("Lap. Permasalahan : ${_recaps[index]['user_segments'][i]['total_problem_reported']}x", style: TextStyle(color: Colors.white)),
+                                            Text(_recaps[index]['user_segments'][i]['segment'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                            const SizedBox(height: 5.0),
+                                            Text("Lap. Aktivitas : ${_recaps[index]['user_segments'][i]['total_activity_reported']}x", style: const TextStyle(color: Colors.white)),
+                                            Text("Lap. Permasalahan : ${_recaps[index]['user_segments'][i]['total_problem_reported']}x", style: const TextStyle(color: Colors.white)),
                                           ],
                                         );
                                       }),
                                     ),
                                     builder: (_, collapsed, expanded) {
                                       return Padding(
-                                        padding: EdgeInsets.only(left: 5, right: 10, bottom: 10.0),
+                                        padding: const EdgeInsets.only(left: 5, right: 10, bottom: 10.0),
                                         child: Expandable(
                                           collapsed: collapsed,
                                           expanded: expanded,
@@ -348,8 +382,8 @@ class _RecapPageState extends State<RecapPage> {
                                   ),
                                 ],
                               ),
-                            ) 
-                          ),  
+                            )
+                          ),
                         ],
                       ),
                     ),
@@ -358,7 +392,6 @@ class _RecapPageState extends State<RecapPage> {
               }
             ),
           ),
-        inAsyncCall: _loading,
       )
     );
   }
@@ -385,7 +418,7 @@ class _RecapPageState extends State<RecapPage> {
   Widget noData() {
     var size = Screen(MediaQuery.of(context).size);
     return Center(
-      child: Container(
+      child: SizedBox(
         width: size.getWidthPx(300),
         height: size.getWidthPx(300),
         child: Column(
@@ -404,10 +437,10 @@ class _RecapPageState extends State<RecapPage> {
     );
   }
 
-Future<File> createFile(String fileUrl) async {
+Future<File?> createFile(String fileUrl) async {
     try {
       /// setting filename 
-      final filename = DateTime.now().millisecondsSinceEpoch.toString()+'.pdf';
+      final filename = '${DateTime.now().millisecondsSinceEpoch}.pdf';
 
       /// getting application doc directory's path in dir variable
       String dir = (await getApplicationDocumentsDirectory()).path;
@@ -430,7 +463,7 @@ Future<File> createFile(String fileUrl) async {
       var bytes = await consolidateHttpClientResponseBytes(response);
 
       /// generating a local system file with name as 'filename' and path as '$dir/$filename'
-      File file = new File('$dir/$filename');
+      File file = File('$dir/$filename');
 
       /// writing bytes data of response in the file.
       await file.writeAsBytes(bytes);

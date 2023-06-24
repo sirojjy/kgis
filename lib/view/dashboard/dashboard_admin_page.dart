@@ -1,16 +1,20 @@
-import 'package:bpjtteknik/change_password.dart';
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/utils/utils.dart';
-import 'package:bpjtteknik/view/auth/login.dart';
+import 'package:bpjt_k_gis_mobile_master/change_password.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/utils.dart';
+import 'package:bpjt_k_gis_mobile_master/view/auth/login.dart';
 import 'package:bubble_tab_indicator/bubble_tab_indicator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:package_info/package_info.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:ribbon/ribbon.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+import 'package:ribbon_widget/ribbon_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sweetalert/sweetalert.dart';
+// import 'package:modal_progress_hud/modal_progress_hud.dart';
+// import 'package:package_info/package_info.dart';
+// import 'package:ribbon/ribbon.dart';
+// import 'package:sweetalert/sweetalert.dart';
 
 import 'admin_search_page.dart';
 
@@ -30,14 +34,14 @@ class DashboardAdminPage extends StatefulWidget {
 }
 
 class _DashboardAdminPageState extends State<DashboardAdminPage> with SingleTickerProviderStateMixin {
-  var _verified = [];
-  var _unverified = [];
-  int totalData;
-  int totalData2;
-  int currentPage;
-  int currentPage2;
+  final _verified = [];
+  final _unverified = [];
+  late int totalData;
+  late int totalData2;
+  late int currentPage;
+  late int currentPage2;
   
-  Screen size;
+  late Screen size;
 
   bool _loading = false;
 
@@ -50,20 +54,20 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> with SingleTick
   var prefRoleId;
   var prefIsApprove;
 
-  String status;
+  late String status;
 
-  Color ribbonColor;
+  late Color ribbonColor;
   double nearLength = 20;
   double farLength = 60;
   RibbonLocation location = RibbonLocation.topEnd;
   
-  RefreshController _refreshController = RefreshController(initialRefresh: false);
-  RefreshController _refreshController2 = RefreshController(initialRefresh: false);
+  final RefreshController _refreshController = RefreshController(initialRefresh: false);
+  final RefreshController _refreshController2 = RefreshController(initialRefresh: false);
 
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -134,11 +138,11 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> with SingleTick
   }
 
   final List<Tab> tabs = <Tab>[
-    Tab(text: "Verified"),
-    Tab(text: "Unverified")
+    const Tab(text: "Verified"),
+    const Tab(text: "Unverified")
   ];
 
-  TabController _tabController;
+  late TabController _tabController;
 
   _submit(ctx, id) async {
     Map<String, dynamic> params = Map<String, dynamic>();
@@ -146,18 +150,32 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> with SingleTick
     params["is_approve"] = true;
     await API.users(params, version).then((response) {
       if (response["status"] != null) {
-        // SweetAlert.show(context,style: SweetAlertStyle.success,title: "Success");
-        SweetAlert.show(context,
+        Alert(
+          context: context,
+          type: AlertType.success,
           title: "Sukses",
-          subtitle: response["message"],
-          style: SweetAlertStyle.success,
-          onPress: (bool isConfirm) {
-          if (isConfirm) {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => DashboardAdminPage()));
-            // return false to keep dialog
-            return true;
-          }
-        });
+          desc: response["message"],
+          buttons: [
+            DialogButton(
+                child: const Text("OK"),
+                onPressed: () {
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => DashboardAdminPage()));
+                }
+            )
+          ]
+        );
+        // SweetAlert.show(context,style: SweetAlertStyle.success,title: "Success");
+        // SweetAlert.show(context,
+        //   title: "Sukses",
+        //   subtitle: response["message"],
+        //   style: SweetAlertStyle.success,
+        //   onPress: (bool isConfirm) {
+        //   if (isConfirm) {
+        //     Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => DashboardAdminPage()));
+        //     // return false to keep dialog
+        //     return true;
+        //   }
+        // });
       }
     });
   }
@@ -165,7 +183,7 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> with SingleTick
   @override
   void initState() {
     super.initState();
-    _tabController = new TabController(vsync: this, length: tabs.length);
+    _tabController = TabController(vsync: this, length: tabs.length);
     _getInfo().then((resInfo) {
       _getPref().then((response) {
         _getUnverified(true);
@@ -190,7 +208,7 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> with SingleTick
     return Scaffold(
       backgroundColor: colorTertiary,
       appBar: AppBar(
-        title: Text('Halo Admin'),
+        title: const Text('Halo Admin'),
         bottom: TabBar(
           isScrollable: true,
           unselectedLabelColor: Colors.white,
@@ -207,22 +225,22 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> with SingleTick
         actions: [
           GestureDetector(
               onTap: () async {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => new ChangePasswordPage(
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ChangePasswordPage(
 
                 )));
               },
-              child: Icon(Icons.lock, color: Colors.white,),
+              child: const Icon(Icons.lock, color: Colors.white,),
           ),
-          SizedBox(width: 10.0,),
+          const SizedBox(width: 10.0,),
           GestureDetector(
               onTap: () async {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => new AdminSearchPage(
+                Navigator.push(context, MaterialPageRoute(builder: (context) => AdminSearchPage(
 
                 )));
               },
-              child: Icon(Icons.search, color: Colors.white,),
+              child: const Icon(Icons.search, color: Colors.white,),
           ),
-          SizedBox(width: 10.0,),
+          const SizedBox(width: 10.0,),
           GestureDetector(
             onTap: () async {
               SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -233,7 +251,7 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> with SingleTick
               children: [
                 Container(
                   margin: const EdgeInsets.only(right: 10.0),
-                  child: Icon(Icons.power_settings_new),
+                  child: const Icon(Icons.power_settings_new),
                 ),
               ],
             )
@@ -241,28 +259,29 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> with SingleTick
         ],
       ),
       body: ModalProgressHUD(
+        inAsyncCall: _loading,
         child: TabBarView(
           controller: _tabController,
           children: [
             SmartRefresher(
               enablePullDown: true,
               enablePullUp: true,
-              header: WaterDropHeader(),
+              header: const WaterDropHeader(),
               footer: CustomFooter(
-                builder: (BuildContext context,LoadStatus mode) {
+                builder: (BuildContext context, LoadStatus? mode) {
                   Widget body ;
                   if (mode == LoadStatus.idle) {
-                    body =  Text("pull up load");
+                    body =  const Text("pull up load");
                   } else if (mode==LoadStatus.loading) {
-                    body =  CupertinoActivityIndicator();
+                    body =  const CupertinoActivityIndicator();
                   } else if (mode == LoadStatus.failed) {
-                    body = Text("Load Failed! Click retry!");
+                    body = const Text("Load Failed! Click retry!");
                   } else if (mode == LoadStatus.canLoading) {
-                      body = Text("release to load more");
+                      body = const Text("release to load more");
                   } else {
-                    body = Text("No more Data");
+                    body = const Text("No more Data");
                   }
-                  return Container(
+                  return SizedBox(
                     height: 55.0,
                     child: Center(child:body),
                   );
@@ -275,66 +294,64 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> with SingleTick
                 shrinkWrap: true,
                 itemCount: _verified.length,
                 itemBuilder: (context, index) {
-                  return Container(
-                    child: GestureDetector(
-                      onTap: () => {
-                        // Navigator.push(context, MaterialPageRoute(builder: (context) => new AdvancedAdminDashboardPage(params: _verified[index])))
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 5.0),
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                          ),
-                          semanticContainer: true,
-                          clipBehavior: Clip.antiAliasWithSaveLayer,
-                          child: Row(
-                            children: <Widget>[
-                              Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.only(left: 5.0),
-                                  decoration: BoxDecoration(
-                                    color: colorPrimary,
-                                  ),
-                                  child: Column(
-                                    children: <Widget>[
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Text("Nama : "+_verified[index]["name"], style: TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold)),
-                                        ),
+                  return GestureDetector(
+                    onTap: () => {
+                      // Navigator.push(context, MaterialPageRoute(builder: (context) => new AdvancedAdminDashboardPage(params: _verified[index])))
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 5.0),
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        semanticContainer: true,
+                        clipBehavior: Clip.antiAliasWithSaveLayer,
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.only(left: 5.0),
+                                decoration: BoxDecoration(
+                                  color: colorPrimary,
+                                ),
+                                child: Column(
+                                  children: <Widget>[
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Text("Nama :${_verified[index]["name"]}", style: const TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold)),
                                       ),
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Text("Email : "+_verified[index]["email"], style: TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
-                                        ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Text("Email : ${_verified[index]["email"]}", style: const TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
                                       ),
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Text("Instansi : "+(_verified[index]["company_field"] == null ? "-" : _verified[index]["company_field"]), style: TextStyle(color: Colors.white), textAlign: TextAlign.justify),
-                                        ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Text("Instansi : ${(_verified[index]["company_field"] ?? "-")}", style: const TextStyle(color: Colors.white), textAlign: TextAlign.justify),
                                       ),
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Text("Ruas : "+(_verified[index]["user_segment"] == "" ? "-" : _verified[index]["user_segment"]), style: TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
-                                        ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Text("Ruas : ${(_verified[index]["user_segment"] == "" ? "-" : _verified[index]["user_segment"])}", style: const TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
                                       ),
-                                    ],
-                                  ),
-                                ) 
-                              ),  
-                            ],
-                          ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            ),
+                          ],
                         ),
                       ),
-                    )
+                    ),
                   );
                 }
               ),
@@ -342,22 +359,22 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> with SingleTick
             SmartRefresher(
               enablePullDown: true,
               enablePullUp: true,
-              header: WaterDropHeader(),
+              header: const WaterDropHeader(),
               footer: CustomFooter(
-                builder: (BuildContext context,LoadStatus mode) {
+                builder: (BuildContext context,LoadStatus? mode) {
                   Widget body ;
                   if (mode == LoadStatus.idle) {
-                    body =  Text("pull up load");
+                    body =  const Text("pull up load");
                   } else if (mode==LoadStatus.loading) {
-                    body =  CupertinoActivityIndicator();
+                    body =  const CupertinoActivityIndicator();
                   } else if (mode == LoadStatus.failed) {
-                    body = Text("Load Failed! Click retry!");
+                    body = const Text("Load Failed! Click retry!");
                   } else if (mode == LoadStatus.canLoading) {
-                      body = Text("release to load more");
+                      body = const Text("release to load more");
                   } else {
-                    body = Text("No more Data");
+                    body = const Text("No more Data");
                   }
-                  return Container(
+                  return SizedBox(
                     height: 55.0,
                     child: Center(child:body),
                   );
@@ -370,85 +387,108 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> with SingleTick
                 shrinkWrap: true,
                 itemCount: _unverified.length,
                 itemBuilder: (context, index) {
-                  return Container(
-                    child: GestureDetector(
-                      onTap: () => {
-                        // Navigator.push(context, MaterialPageRoute(builder: (context) => new AdvancedAdminDashboardPage(params: _unverified[index])))
-                        SweetAlert.show(context,
-                          title: "Apakah Anda Yakin",
-                          subtitle: "Menyetujui user ini?",
-                          style: SweetAlertStyle.confirm,
-                          showCancelButton: true, 
-                          onPress: (bool isConfirm) {
-                          if (isConfirm) {
-                            _submit(context, _unverified[index]["id"]);
-                            // return false to keep dialog
-                            return false;
-                          }
-                        })
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 5.0),
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                          ),
-                          semanticContainer: true,
-                          clipBehavior: Clip.antiAliasWithSaveLayer,
-                          child: Row(
-                            children: <Widget>[
-                              Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.only(left: 5.0),
-                                  decoration: BoxDecoration(
-                                    color: colorPrimary,
-                                  ),
-                                  child: Column(
-                                    children: <Widget>[
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Text("Nama : "+_unverified[index]["name"], style: TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold)),
-                                        ),
+                  return GestureDetector(
+                    onTap: () => {
+                    Alert(
+                    context: context,
+                    type: AlertType.warning,
+                    title: "Apakah Anda Yakin",
+                    desc: "Menyetujui user ini?",
+                    buttons: [
+                    DialogButton(
+                    onPressed: () {
+                    _submit(context, _unverified[index]["id"]);
+                    },
+                    color: Color.fromRGBO(0, 179, 134, 1.0),
+                    child: const Text(
+                    "Ya",
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                    ),
+                    DialogButton(
+                    child: const Text(
+                    "Tidak",
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    ),
+                    ],
+                    ).show()
+                  },
+                      // Navigator.push(context, MaterialPageRoute(builder: (context) => new AdvancedAdminDashboardPage(params: _unverified[index])))
+                      // SweetAlert.show(context,
+                      //   title: "Apakah Anda Yakin",
+                      //   subtitle: "Menyetujui user ini?",
+                      //   style: SweetAlertStyle.confirm,
+                      //   showCancelButton: true,
+                      //   onPress: (bool isConfirm) {
+                      //   if (isConfirm) {
+                      //     _submit(context, _unverified[index]["id"]);
+                      //     // return false to keep dialog
+                      //     return false;
+                      //   }
+                      // })
+
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 5.0),
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                        semanticContainer: true,
+                        clipBehavior: Clip.antiAliasWithSaveLayer,
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.only(left: 5.0),
+                                decoration: BoxDecoration(
+                                  color: colorPrimary,
+                                ),
+                                child: Column(
+                                  children: <Widget>[
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Text("Nama : ${_unverified[index]["name"]}", style: const TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold)),
                                       ),
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Text("Email : "+_unverified[index]["email"], style: TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
-                                        ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Text("Email : ${_unverified[index]["email"]}", style: const TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
                                       ),
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Text("Instansi : "+(_unverified[index]["company_field"] == null ? "-" : _unverified[index]["company_field"]), style: TextStyle(color: Colors.white), textAlign: TextAlign.justify),
-                                        ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Text("Instansi : ${(_unverified[index]["company_field"] ?? "-")}", style: const TextStyle(color: Colors.white), textAlign: TextAlign.justify),
                                       ),
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Text("Ruas : "+(_unverified[index]["user_segment"] == "" ? "-" : _unverified[index]["user_segment"]), style: TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
-                                        ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(4.0, 4.0, 4.0, 4.0),
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Text("Ruas : ${(_unverified[index]["user_segment"] == "" ? "-" : _unverified[index]["user_segment"])}", style: const TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
                                       ),
-                                    ],
-                                  ),
-                                ) 
-                              ),  
-                            ],
-                          ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            ),
+                          ],
                         ),
                       ),
-                    )
+                    ),
                   );
                 }
               ),
             ),
           ],
         ),
-        inAsyncCall: _loading,
       )
     );
   }
@@ -465,10 +505,11 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> with SingleTick
     // monitor network fetch
     await _getVerified(false);
     // if failed,use loadFailed(),if no data return,use LoadNodata()
-    if(mounted)
-    setState(() {
+    if(mounted) {
+      setState(() {
 
     });
+    }
     _refreshController.loadComplete();
   }
 
@@ -484,10 +525,11 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> with SingleTick
     // monitor network fetch
     await _getUnverified(false);
     // if failed,use loadFailed(),if no data return,use LoadNodata()
-    if(mounted)
-    setState(() {
+    if(mounted) {
+      setState(() {
 
     });
+    }
     _refreshController2.loadComplete();
   }
 }

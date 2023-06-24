@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/plugin_api.dart';
 
-class ZoomButtonsPluginOption extends LayerOptions {
+class ZoomButtonsPluginOption extends FlutterMap {
   final int minZoom;
   final int maxZoom;
   final bool mini;
@@ -13,25 +13,25 @@ class ZoomButtonsPluginOption extends LayerOptions {
   final IconData zoomInIcon;
   final IconData zoomOutIcon;
 
-  ZoomButtonsPluginOption({
-    Key key,
+  const ZoomButtonsPluginOption({
+    super.key,
     this.minZoom = 1,
     this.maxZoom = 18,
     this.mini = true,
     this.padding = 2.0,
     this.alignment = Alignment.topRight,
-    this.zoomInColor,
+    required this.zoomInColor,
     this.zoomInIcon = Icons.zoom_in,
-    this.zoomOutColor,
+    required this.zoomOutColor,
     this.zoomOutIcon = Icons.zoom_out,
-    rebuild,
-  }) : super(key: key, rebuild: rebuild);
+    rebuild, required super.options,
+  }) ;
 }
 
-class ZoomButtonsPlugin implements MapPlugin {
+class ZoomButtonsPlugin{
   @override
   Widget createLayer(
-      LayerOptions options, MapState mapState, Stream<Null> stream) {
+      FlutterMap options, FlutterMapState mapState, Stream<Null> stream) {
     if (options is ZoomButtonsPluginOption) {
       return ZoomButtons(options, mapState, stream);
     }
@@ -39,14 +39,14 @@ class ZoomButtonsPlugin implements MapPlugin {
   }
 
   @override
-  bool supportsLayer(LayerOptions options) {
+  bool supportsLayer(FlutterMap options) {
     return options is ZoomButtonsPluginOption;
   }
 }
 
 class ZoomButtons extends StatelessWidget {
   final ZoomButtonsPluginOption zoomButtonsOpts;
-  final MapState map;
+  final FlutterMapState map;
   final Stream<Null> stream;
   final FitBoundsOptions options =
       const FitBoundsOptions(padding: EdgeInsets.all(12.0));
@@ -72,13 +72,14 @@ class ZoomButtons extends StatelessWidget {
               backgroundColor:
                   zoomButtonsOpts.zoomInColor ?? Theme.of(context).primaryColor,
               onPressed: () {
-                var bounds = map.getBounds();
+                var bounds = map.bounds;
                 var centerZoom = map.getBoundsCenterZoom(bounds, options);
                 var zoom = centerZoom.zoom + 1;
                 if (zoom < zoomButtonsOpts.minZoom) {
                   zoom = zoomButtonsOpts.minZoom as double;
                 } else {
-                  map.move(centerZoom.center, zoom);
+                  map.move(centerZoom.center, zoom, source: MapEventSource.tap);
+                  ///add source: MapEventSource.tap
                 }
               },
               child: Icon(zoomButtonsOpts.zoomInIcon),
@@ -92,13 +93,14 @@ class ZoomButtons extends StatelessWidget {
               backgroundColor: zoomButtonsOpts.zoomOutColor ??
                   Theme.of(context).primaryColor,
               onPressed: () {
-                var bounds = map.getBounds();
+                var bounds = map.bounds;
                 var centerZoom = map.getBoundsCenterZoom(bounds, options);
                 var zoom = centerZoom.zoom - 1;
                 if (zoom > zoomButtonsOpts.maxZoom) {
                   zoom = zoomButtonsOpts.maxZoom as double;
                 } else {
-                  map.move(centerZoom.center, zoom);
+                  map.move(centerZoom.center, zoom, source: MapEventSource.tap);
+                  ///add source: MapEventSource.tap
                 }
               },
               child: Icon(zoomButtonsOpts.zoomOutIcon),

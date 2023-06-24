@@ -122,7 +122,7 @@ class _AttendanceDetailPageState extends State<AttendanceDetailPage> {
       height: MediaQuery.of(context).size.height * 0.35,
       child: Carousel(
         boxFit: BoxFit.cover,
-        images: onlyImageList,
+        images: List<Widget>.from(onlyImageList),
         autoplay: true,
         animationCurve: Curves.fastOutSlowIn,
         animationDuration: const Duration(milliseconds: 1000),

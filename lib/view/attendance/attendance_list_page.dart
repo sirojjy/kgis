@@ -1,15 +1,17 @@
 import 'dart:convert';
 
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/helper/db.dart';
-import 'package:bpjtteknik/helper/main_helper.dart';
-import 'package:bpjtteknik/utils/colors.dart';
-import 'package:bpjtteknik/utils/responsive_screen.dart';
-import 'package:bpjtteknik/view/dashboard/dashboard_page.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/db.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/main_helper.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/colors.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/responsive_screen.dart';
+import 'package:bpjt_k_gis_mobile_master/view/dashboard/dashboard_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:package_info/package_info.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+// import 'package:modal_progress_hud/modal_progress_hud.dart';
+// import 'package:package_info/package_info.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -40,8 +42,8 @@ class AttendanceListPage extends StatefulWidget {
 class AttendanceListPageState extends State<AttendanceListPage> {
   bool _loading = true;
 
-  int totalData;
-  int currentPage;
+  late int totalData;
+  late int currentPage;
 
   var prefId;
   var prefName;
@@ -52,15 +54,15 @@ class AttendanceListPageState extends State<AttendanceListPage> {
   var prefRoleId;
   var prefIsApprove;
   var prefSegment;
-  List prefSegments = List();
+  List prefSegments = [];
   
-  RefreshController _refreshController = RefreshController(initialRefresh: false);
-  var _attendances = [];
+  final RefreshController _refreshController = RefreshController(initialRefresh: false);
+  final _attendances = [];
   
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -73,7 +75,7 @@ class AttendanceListPageState extends State<AttendanceListPage> {
   }
   
   Future<void> _getAttendance(bool isRefresh) async {
-    String userId;
+    late String userId;
     if (prefCompanyField == "PMI" || prefCompanyField == "PMO") {
       userId = prefId;
     }
@@ -102,16 +104,16 @@ class AttendanceListPageState extends State<AttendanceListPage> {
   
   _getPref() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefId = prefs.getString('id');
-    prefName = prefs.getString('name');
-    prefCompany = prefs.getString('company');
-    prefCompanyField = prefs.getString('company_field');
-    prefPhone = prefs.getString('phone');
-    prefEmail = prefs.getString('email');
-    prefRoleId = prefs.getString('role_id');
-    prefIsApprove = prefs.getBool('is_approve');
-    prefSegment = prefs.getString('segment');
-    prefSegments = jsonDecode(prefs.getString('segments'));
+    prefId = prefs.getString('id')!;
+    prefName = prefs.getString('name')!;
+    prefCompany = prefs.getString('company')!;
+    prefCompanyField = prefs.getString('company_field')!;
+    prefPhone = prefs.getString('phone')!;
+    prefEmail = prefs.getString('email')!;
+    prefRoleId = prefs.getString('role_id')!;
+    prefIsApprove = prefs.getBool('is_approve')!;
+    prefSegment = prefs.getString('segment')!;
+    prefSegments = jsonDecode(prefs.getString('segments')!);
   }
   
   @override
@@ -139,50 +141,51 @@ class AttendanceListPageState extends State<AttendanceListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Data Absensi'),
+        title: const Text('Data Absensi'),
         backgroundColor: colorPrimary,
         actions: [
           GestureDetector(
               onTap: () async {
                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => DashboardPage()));
               },
-              child: Icon(Icons.home, color: Colors.white,),
+              child: const Icon(Icons.home, color: Colors.white,),
           ),
-          SizedBox(width: 10.0,),
+          const SizedBox(width: 10.0,),
           Container(
-            margin: EdgeInsets.only(right: 10.0),
+            margin: const EdgeInsets.only(right: 10.0),
             child: GestureDetector(
               onTap: () async {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => new AttendanceSearchPage(
+                Navigator.push(context, MaterialPageRoute(builder: (context) => AttendanceSearchPage(
 
                 )));
               },
-              child: Icon(Icons.search, color: Colors.white,),
+              child: const Icon(Icons.search, color: Colors.white,),
             ),
           )
         ],
       ),
       body: ModalProgressHUD(
-        child: _attendances.length < 1 ? noData() : 
+        inAsyncCall: _loading,
+        child: _attendances.isEmpty ? noData() :
           SmartRefresher(
             enablePullDown: true,
             enablePullUp: true,
-            header: WaterDropHeader(),
+            header: const WaterDropHeader(),
             footer: CustomFooter(
-              builder: (BuildContext context,LoadStatus mode){
+              builder: (BuildContext context,LoadStatus? mode){
                 Widget body ;
                 if (mode == LoadStatus.idle) {
-                  body =  Text("pull up load");
+                  body =  const Text("pull up load");
                 } else if (mode == LoadStatus.loading) {
-                  body =  CupertinoActivityIndicator();
+                  body =  const CupertinoActivityIndicator();
                 } else if (mode == LoadStatus.failed) {
-                  body = Text("Load Failed! Click retry!");
+                  body = const Text("Load Failed! Click retry!");
                 } else if (mode == LoadStatus.canLoading) {
-                    body = Text("release to load more");
+                    body = const Text("release to load more");
                 } else {
-                  body = Text("No more Data");
+                  body = const Text("No more Data");
                 }
-                return Container(
+                return SizedBox(
                   height: 55.0,
                   child: Center(child:body),
                 );
@@ -236,11 +239,11 @@ class AttendanceListPageState extends State<AttendanceListPage> {
                       child: Row(
                         children: <Widget>[
                           Container(
-                            constraints: BoxConstraints(maxWidth: 125.0),
+                            constraints: const BoxConstraints(maxWidth: 125.0),
                             child: Align(
                               alignment: Alignment.topCenter,
                               child: displaySelectedFile(
-                                _attendances[index]['filepath'], 
+                                _attendances[index]['filepath'],
                                 _attendances[index]['filename']
                               ),
                             )
@@ -257,26 +260,26 @@ class AttendanceListPageState extends State<AttendanceListPage> {
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text(_attendances[index]["name"], style: TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold)),
+                                      child: Text(_attendances[index]["name"], style: const TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold)),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text(_attendances[index]["position"] ?? '-', style: TextStyle(color: Colors.white, fontSize: 14.0)),
+                                      child: Text(_attendances[index]["position"] ?? '-', style: const TextStyle(color: Colors.white, fontSize: 14.0)),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text(_attendances[index]["user_segment"] ?? '-', style: TextStyle(color: Colors.white, fontSize: 14.0)),
+                                      child: Text(_attendances[index]["user_segment"] ?? '-', style: const TextStyle(color: Colors.white, fontSize: 14.0)),
                                     ),
                                   ),
-                                  Divider(height: 7.0, color: Colors.white,),
-                                  Padding(
-                                    padding: const EdgeInsets.all(4.0),
+                                  const Divider(height: 7.0, color: Colors.white,),
+                                  const Padding(
+                                    padding: EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
                                       child: Text("Waktu Absen :", style: TextStyle(color: Colors.white, fontSize: 14.0)),
@@ -286,13 +289,13 @@ class AttendanceListPageState extends State<AttendanceListPage> {
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text(date(DateTime.parse(_attendances[index]["time"]).toLocal()), style: TextStyle(color: Colors.white, fontSize: 14.0)),
+                                      child: Text(date(DateTime.parse(_attendances[index]["time"]).toLocal()), style: const TextStyle(color: Colors.white, fontSize: 14.0)),
                                     ),
                                   ),
                                 ],
                               ),
-                            ) 
-                          ),  
+                            )
+                          ),
                         ],
                       ),
                     ),
@@ -301,7 +304,6 @@ class AttendanceListPageState extends State<AttendanceListPage> {
               }
             ),
           ),
-        inAsyncCall: _loading,
       )
     );
   }
@@ -318,10 +320,11 @@ class AttendanceListPageState extends State<AttendanceListPage> {
     // monitor network fetch
     await _getAttendance(false);
     // if failed,use loadFailed(),if no data return,use LoadNodata()
-    if(mounted)
-    setState(() {
+    if(mounted) {
+      setState(() {
 
     });
+    }
     _refreshController.loadComplete();
   }
 
@@ -334,12 +337,10 @@ class AttendanceListPageState extends State<AttendanceListPage> {
       child: url == "/" || url == null
         ? Image.asset("assets/images/no_image_2.png")
         : (url.contains(".pdf") ? Column(children: <Widget>[Image.asset("assets/images/pdf_placeholder.png", width: 120.0,)]) : 
-          Container(
-            child: FadeInImage.assetNetwork(
-                placeholder: 'assets/images/no_image_2.png',
-                image: "http://103.6.53.254:13480/bpjt-teknik/public"+path+"/" + url,
-                height: 115.0,
-            )
+          FadeInImage.assetNetwork(
+              placeholder: 'assets/images/no_image_2.png',
+              image: "http://103.6.53.254:13480/bpjt-teknik/public$path/$url",
+              height: 115.0,
           )
         ),
     );
@@ -348,7 +349,7 @@ class AttendanceListPageState extends State<AttendanceListPage> {
   Widget noData() {
     var size = Screen(MediaQuery.of(context).size);
     return Center(
-      child: Container(
+      child: SizedBox(
         width: size.getWidthPx(300),
         height: size.getWidthPx(300),
         child: Column(

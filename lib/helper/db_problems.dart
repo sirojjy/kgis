@@ -17,7 +17,7 @@ class DbProblems {
 
   Future<Map<String, dynamic>> getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    Map<String, dynamic> ret = Map<String, dynamic>();
+    Map<String, dynamic> ret = <String, dynamic>{};
 
     ret['app_name'] = packageInfo.appName;
     ret['package_name'] = packageInfo.packageName;
@@ -28,41 +28,37 @@ class DbProblems {
   }
   
   factory DbProblems() {
-    if (_dbProblems == null) {
-      _dbProblems = DbProblems._createObject();
-    }
+    _dbProblems ??= DbProblems._createObject();
     return _dbProblems!;
   }
 
   Future<Database> get database async {
-    var db = new Db();
-    if (_database == null) {
-      _database = await db.init();
-    }
+    var db = Db();
+    _database ??= await db.init();
     return _database!;
   }
 
   Future<List<Map<String, dynamic>>> select() async {
-    Database db = await this.database;
+    Database db = await database;
     var mapList = await db.query('problems', orderBy: 'id');
     return mapList;
   }
 
   Future<List<Map<String, dynamic>>> selectUnsync() async {
-    Database db = await this.database;
+    Database db = await database;
     var mapList = await db.query('problems', where: 'is_sync=?', whereArgs: [0]);
     return mapList;
   }
 
 //create databases
   Future<int> insert(Map<String, dynamic> params) async {
-    Database db = await this.database;
+    Database db = await database;
     int count = await db.insert('problems', params);
     return count;
   }
 //update databases
   Future<int> update(Map<String, dynamic> object, int id) async {
-    Database db = await this.database;
+    Database db = await database;
     int count = await db.update('problems', object, 
                                 where: 'id=?',
                                 whereArgs: [id]);
@@ -71,7 +67,7 @@ class DbProblems {
 
 //delete databases
   Future<int> delete(int id) async {
-    Database db = await this.database;
+    Database db = await database;
     int count = await db.delete('problems', 
                                 where: 'id=?', 
                                 whereArgs: [id]);
@@ -85,7 +81,7 @@ class DbProblems {
     int count = problemsMapList.length;
     for (int i=0; i<count; i++) {
 
-      Map<String, dynamic> params = Map<String, dynamic>();
+      Map<String, dynamic> params = <String, dynamic>{};
       params["user_id"] = problemsMapList[i]["user_id"];
       params["problem"] = problemsMapList[i]["problem"];
       params["long"] = problemsMapList[i]["long"];

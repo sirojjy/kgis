@@ -2,25 +2,29 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/helper/db.dart';
-import 'package:bpjtteknik/helper/db_presences.dart';
-import 'package:bpjtteknik/helper/main_helper.dart' as helper;
-import 'package:bpjtteknik/helper/main_helper.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/db.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/db_presences.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/main_helper.dart' as helper;
+import 'package:bpjt_k_gis_mobile_master/helper/main_helper.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
-import 'package:bpjtteknik/utils/utils.dart';
-import 'package:bpjtteknik/view/dashboard/dashboard_page.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/utils.dart';
+import 'package:bpjt_k_gis_mobile_master/view/dashboard/dashboard_page.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:package_info/package_info.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+// import 'package:modal_progress_hud/modal_progress_hud.dart';
+// import 'package:package_info/package_info.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sweetalert/sweetalert.dart';
-import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+// import 'package:sweetalert/sweetalert.dart';
+import 'package:flutter_native_timezone_updated_gradle/flutter_native_timezone.dart';
+///ganti flutter_native_timezone ke flutter_native_timezone_updated_gradle
 
 class AttendancePage extends StatefulWidget {
   @override
@@ -28,7 +32,7 @@ class AttendancePage extends StatefulWidget {
 }
 
 class _AttendancePageState extends State<AttendancePage> {
-  BuildContext dialogContext;
+  late BuildContext dialogContext;
 
   String _timezone = 'Unknown';
 
@@ -36,7 +40,7 @@ class _AttendancePageState extends State<AttendancePage> {
   bool _disableButton = false;
   bool isPopupInitShow = false;
   
-  Timer timerGetTime;
+  late Timer timerGetTime;
   
   var prefId;
   var prefName;
@@ -48,26 +52,26 @@ class _AttendancePageState extends State<AttendancePage> {
   var prefIsApprove;
   var prefSegment;
 
-  StateSetter timeState;
+  late StateSetter timeState;
 
-  String _timeString;
-  String districtSubdistrict;
-  String cityRegion;
-  String completeLocation;
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String _timeString;
+  late String districtSubdistrict;
+  late String cityRegion;
+  late String completeLocation;
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
   
   int countPresent = 0;
   int countPermit = 0;
   int countPresentHoliday = 0;
   int countPresentWeekend = 0;
   
-  Position _position;
+  late Position _position;
   List<StreamSubscription<dynamic>> _streamSubscriptions = <StreamSubscription<dynamic>>[];
   
-  File _image;
+  late File _image;
 
   TextEditingController _reasonController = new TextEditingController();
 
@@ -86,24 +90,30 @@ class _AttendancePageState extends State<AttendancePage> {
   Future _getImage() async {
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('dd-MM-yyyy – kk:mm').format(now);
+    final ImagePicker _imagePicker = ImagePicker();
+    // var image = await _imagePicker.pickImage(source: ImageSource.camera);
+    // img.Image? im = img.decodeImage(image?.readAsBytesSync());
+    XFile? image = await _imagePicker.pickImage(source: ImageSource.camera);
+    if (image != null) {
+      img.Image? im = img.decodeImage(await image.readAsBytes());
+      if (im != null) {
+        img.Image convertImage = img.copyResize(im, width: 800);
 
-    var image = await ImagePicker.pickImage(source: ImageSource.camera);
-    img.Image im = img.decodeImage(image.readAsBytesSync());
+        img.Image drawName = img.drawString(img.Image.from(convertImage), font: img.arial24, prefName);
+        img.Image drawDateTime = img.drawString(img.Image.from(drawName), font: img.arial24, formattedDate);
+        img.Image drawSegment = img.drawString(img.Image.from(drawDateTime), font: img.arial24, prefSegment);
+        img.Image drawLongLat = img.drawString(img.Image.from(drawSegment), font: img.arial24, '${_position.latitude} ${_position.longitude}');
+        img.Image drawDistrictSubdistrict = img.drawString(img.Image.from(drawLongLat), font: img.arial24,districtSubdistrict);
+        img.Image drawCityRegion = img.drawString(img.Image.from(drawDistrictSubdistrict), font: img.arial24, cityRegion);
+        img.Image drawAltitude = img.drawString(img.Image.from(drawCityRegion), font: img.arial24, '${_position.altitude}');
 
-    img.Image convertImage = img.copyResize(im, width: 800);
-
-    img.Image drawName = img.drawString(img.Image.from(convertImage), img.arial_24, 0, 0, prefName);
-    img.Image drawDateTime = img.drawString(img.Image.from(drawName), img.arial_24, 0, 30, formattedDate);
-    img.Image drawSegment = img.drawString(img.Image.from(drawDateTime), img.arial_24, 0, 60, prefSegment);
-    img.Image drawLongLat = img.drawString(img.Image.from(drawSegment), img.arial_24, 0, 90, '${_position.latitude} ${_position.longitude}');
-    img.Image drawDistrictSubdistrict = img.drawString(img.Image.from(drawLongLat), img.arial_24, 0, 120,districtSubdistrict);
-    img.Image drawCityRegion = img.drawString(img.Image.from(drawDistrictSubdistrict), img.arial_24, 0, 150,cityRegion);
-    img.Image drawAltitude = img.drawString(img.Image.from(drawCityRegion), img.arial_24, 0, 180, '${_position.altitude}');
-
-    File(image.path).writeAsBytesSync(img.encodeNamedImage(drawAltitude, image.path));
-    setState(() {
-      _image = image;
-    });
+        List<int> encodedImage = img.encodePng(drawAltitude);
+        File(image.path).writeAsBytesSync(encodedImage);
+        setState(() {
+          _image = File(image.path);
+        });
+      }
+    }
   }
   
   _getPref() async {
@@ -264,14 +274,20 @@ class _AttendancePageState extends State<AttendancePage> {
         _loading = false;
       });
 
-      SweetAlert.show(
-        context,
-        title: "Error",
-        subtitle: "Silahkan lakukan foto terlebih dahulu",
-        style: SweetAlertStyle.error,
-        onPress: (bool isConfirm) {
-          return true;
-        }
+      ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+              type: ArtSweetAlertType.danger,
+              title: "Error",
+              text: "Silahkan lakukan foto terlebih dahulu."
+          )
+        // context,
+        // title: "Error",
+        // subtitle: "Silahkan lakukan foto terlebih dahulu",
+        // style: SweetAlertStyle.error,
+        // onPress: (bool isConfirm) {
+        //   return true;
+        // }
       );
 
       return;
@@ -319,14 +335,20 @@ class _AttendancePageState extends State<AttendancePage> {
         _loading = false;
       });
 
-      SweetAlert.show(
-        context,
-        title: "Error",
-        subtitle: "Silahkan lakukan foto terlebih dahulu",
-        style: SweetAlertStyle.error,
-        onPress: (bool isConfirm) {
-          return true;
-        }
+      ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+              type: ArtSweetAlertType.danger,
+              title: "Error",
+              text: "Silahkan lakukan foto terlebih dahulu"
+          )
+        // context,
+        // title: "Error",
+        // subtitle: "Silahkan lakukan foto terlebih dahulu",
+        // style: SweetAlertStyle.error,
+        // onPress: (bool isConfirm) {
+        //   return true;
+        // }
       );
 
       return;
@@ -362,18 +384,28 @@ class _AttendancePageState extends State<AttendancePage> {
     if (attendanceType == "permit") {
       Navigator.pop(dialogContext);
     }
-    SweetAlert.show(context,
-      title: "Sukses",
-      subtitle: "Sukses melakukan absen",
-      style: SweetAlertStyle.success,
-      onPress: (bool isConfirm) {
-        if (isConfirm) {
-          Navigator.of(context).pop();
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => DashboardPage()));
-        }
-        return;
-      }
+    ArtSweetAlert response = await ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+            type: ArtSweetAlertType.success,
+            title: "Sukses",
+            text: "Sukses melakukan absen"
+        )
+    //   title: "Sukses",
+    //   subtitle: "Sukses melakukan absen",
+    //   style: SweetAlertStyle.success,
+    //   onPress: (bool isConfirm) {
+    //     if (isConfirm) {
+    //       Navigator.of(context).pop();
+    //       Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => DashboardPage()));
+    //     }
+    //     return;
+    //   }
     );
+    if(response != null) {
+      Navigator.of(context).pop();
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => DashboardPage()));
+    }
   }
   
   @override
@@ -384,6 +416,7 @@ class _AttendancePageState extends State<AttendancePage> {
         backgroundColor: colorPrimary,
       ),
       body: ModalProgressHUD(
+        inAsyncCall: _loading,
         child: Container(
           padding: EdgeInsets.all(15.0),
           child: ListView(
@@ -412,10 +445,10 @@ class _AttendancePageState extends State<AttendancePage> {
               Text(
                 _disableButton ?
                 "Anda sudah absen hari ini!" :
-                "Silahkan Absen", 
+                "Silahkan Absen",
                 style: TextStyle(
-                  color: Colors.black, 
-                  fontSize: 20.0, 
+                  color: Colors.black,
+                  fontSize: 20.0,
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center
@@ -423,10 +456,10 @@ class _AttendancePageState extends State<AttendancePage> {
               Text(
                 _position == null ?
                 "Harap Tunggu Sedang Mengkalibrasi Jarak Akurat Anda" :
-                "Akurat Hingga "+_position.accuracy.toStringAsFixed(0).toString()+" Meter", 
+                "Akurat Hingga "+_position.accuracy.toStringAsFixed(0).toString()+" Meter",
                 style: TextStyle(
-                  color: Colors.black, 
-                  fontSize: 20.0, 
+                  color: Colors.black,
+                  fontSize: 20.0,
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center
@@ -440,7 +473,7 @@ class _AttendancePageState extends State<AttendancePage> {
               //       child: Align(
               //         alignment: Alignment.center,
               //         child: Text(
-              //           _timeString, 
+              //           _timeString,
               //           style: TextStyle(
               //             color: colorSecondary, fontSize: 50.0
               //           )
@@ -565,7 +598,6 @@ class _AttendancePageState extends State<AttendancePage> {
             ],
           ),
         ),
-        inAsyncCall: _loading,
       )
     );
   }

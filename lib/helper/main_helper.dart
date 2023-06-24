@@ -84,49 +84,37 @@ String monthIndo(int month) {
   switch (month) {
     case 1:
       return "Januari";
-      break;
     case 2:
       return "Februari";
-      break;
     case 3:
       return "Maret";
-      break;
     case 4:
       return "April";
-      break;
     case 5:
       return "Mei";
-      break;
     case 6:
       return "Juni";
-      break;
     case 7:
       return "Juli";
-      break;
     case 8:
       return "Agustus";
-      break;
     case 9:
       return "September";
-      break;
     case 10:
       return "Oktober";
-      break;
     case 11:
       return "November";
-      break;
     case 12:
       return "Desember";
-      break;
   }
 
   return "";
 }
 
 String date(DateTime tm) {
-  DateTime today = new DateTime.now();
-  Duration oneDay = new Duration(days: 1);
-  Duration twoDay = new Duration(days: 2);
+  DateTime today = DateTime.now();
+  Duration oneDay = const Duration(days: 1);
+  Duration twoDay = const Duration(days: 2);
   // Duration oneWeek = new Duration(days: 7);
   String month;
   String day ='';

@@ -10,7 +10,7 @@ class DbPresences {
   static DbPresences? _dbPresences;
   static Database? _database;
 
-  static final columnIsSync = 'is_sync';
+  static const columnIsSync = 'is_sync';
 
   DbPresences._createObject();
 
@@ -27,15 +27,13 @@ class DbPresences {
   }
   
   factory DbPresences() {
-    if (_dbPresences == null) {
-      _dbPresences = DbPresences._createObject();
-    }
+    _dbPresences ??= DbPresences._createObject();
     return _dbPresences!;
   }
 
   Future<int> getCount() async {
       //database connection
-      Database db = await this.database;
+      Database db = await database;
       var x = await db.rawQuery("SELECT COUNT (*) from presences WHERE status = 'in' OR status = 'out'");
       int count = Sqflite.firstIntValue(x)!;
       return count;
@@ -43,8 +41,8 @@ class DbPresences {
 
   Future<int> getCountPresent(String date) async {
       //database connection
-      Database db = await this.database;
-      var x = await db.rawQuery("SELECT COUNT (*) from presences WHERE status = 'in' AND date = '"+date+"'");
+      Database db = await database;
+      var x = await db.rawQuery("SELECT COUNT (*) from presences WHERE status = 'in' AND date = '$date'");
       int count = Sqflite.firstIntValue(x)!;
       return count;
   }
@@ -56,11 +54,11 @@ class DbPresences {
 
     // Database db = await this.database;
     Directory directory = await getApplicationDocumentsDirectory();
-    String pathActivity = directory.path + '/bpjt_teknik.db';
+    String pathActivity = '${directory.path}/bpjt_teknik.db';
     print("ASDASD");
     Database db = await openDatabase(pathActivity);
     print("ASDASD");
-    var x = await db.rawQuery("SELECT COUNT (*) from presences WHERE (status = 'in' OR status = 'permit') AND date = '"+date+"'");
+    var x = await db.rawQuery("SELECT COUNT (*) from presences WHERE (status = 'in' OR status = 'permit') AND date = '$date'");
     int count = Sqflite.firstIntValue(x)!;
 
     return count;
@@ -68,35 +66,33 @@ class DbPresences {
 
   Future<int> getCountPermit(String date) async {
       //database connection
-      Database db = await this.database;
-      var x = await db.rawQuery("SELECT COUNT (*) from presences WHERE status = 'permit' AND date = '"+date+"'");
+      Database db = await database;
+      var x = await db.rawQuery("SELECT COUNT (*) from presences WHERE status = 'permit' AND date = '$date'");
       int count = Sqflite.firstIntValue(x)!;
       return count;
   }
 
   Future<Database> get database async {
-    var db = new Db();
-    if (_database == null) {
-      _database = await db.init();
-    }
+    var db = Db();
+    _database ??= await db.init();
     return _database!;
   }
 
   Future<List<Map<String, dynamic>>> select() async {
-    Database db = await this.database;
+    Database db = await database;
     var mapList = await db.query('presences', orderBy: 'id');
     return mapList;
   }
 
   Future<List<Map<String, dynamic>>> selectUnsync() async {
-    Database db = await this.database;
+    Database db = await database;
     var mapList = await db.query('presences', where: 'is_sync=?', whereArgs: [0]);
     return mapList;
   }
 
 //create databases
   Future<int> insert(Map<String, dynamic> params) async {
-    Database db = await this.database;
+    Database db = await database;
     print(db);
     int count = await db.insert('presences', params);
     print(count);
@@ -104,7 +100,7 @@ class DbPresences {
   }
 //update databases
   Future<int> update(Map<String, dynamic> object, int id) async {
-    Database db = await this.database;
+    Database db = await database;
     int count = await db.update('presences', object, 
                                 where: 'id=?',
                                 whereArgs: [id]);
@@ -113,7 +109,7 @@ class DbPresences {
 
 //delete databases
   Future<int> delete(int id) async {
-    Database db = await this.database;
+    Database db = await database;
     int count = await db.delete('presences', 
                                 where: 'id=?', 
                                 whereArgs: [id]);

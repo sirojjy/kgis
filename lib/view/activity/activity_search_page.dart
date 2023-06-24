@@ -1,12 +1,13 @@
 import 'dart:convert';
 
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/utils/utils.dart';
-import 'package:bpjtteknik/view/activity/activity_page.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/utils.dart';
+import 'package:bpjt_k_gis_mobile_master/view/activity/activity_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:intl/intl.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+// import 'package:package_info/package_info.dart';
 import 'package:search_choices/search_choices.dart';
 // import 'package:searchable_dropdown/searchable_dropdown.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,14 +18,14 @@ class ActivitySearchPage extends StatefulWidget {
 }
 
 class _ActivitySearchPageState extends State<ActivitySearchPage> {
-  String _dateFrom;
-  String _dateTo;
-  String _selectedSegment;
-  String _selectedPosition;
-  String _selectedRole;
+  late String _dateFrom;
+  late String _dateTo;
+  late String _selectedSegment;
+  late String _selectedPosition;
+  late String _selectedRole;
 
-  List _segments = List();
-  List prefSegments = List();
+  List _segments = [];
+  List prefSegments = [];
 
   var prefId;
   var prefName;
@@ -36,7 +37,7 @@ class _ActivitySearchPageState extends State<ActivitySearchPage> {
   var prefIsApprove;
   var prefSegment;
 
-  TextEditingController _nameController = new TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
 
   List roles = [
     "PMO",
@@ -66,13 +67,14 @@ class _ActivitySearchPageState extends State<ActivitySearchPage> {
     prefRoleId = prefs.getString('role_id');
     prefIsApprove = prefs.getBool('is_approve');
     prefSegment = prefs.getString('segment');
-    prefSegments = jsonDecode(prefs.getString('segments'));
+    String? segmentsString = prefs.getString('segments');
+    prefSegments = segmentsString != null ? jsonDecode(segmentsString) : [];
   }
   
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -115,7 +117,7 @@ class _ActivitySearchPageState extends State<ActivitySearchPage> {
       appBar: AppBar(
         elevation: 0.1,
         backgroundColor: colorPrimary,
-        title: Text("Pencarian"),
+        title: const Text("Pencarian"),
         centerTitle: true,
       ),
       backgroundColor: Colors.white,
@@ -131,7 +133,7 @@ class _ActivitySearchPageState extends State<ActivitySearchPage> {
                 keyboardType: TextInputType.text,
                 autocorrect: false,
                 maxLines: 1,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Nama',
                   labelStyle: TextStyle(decorationStyle: TextDecorationStyle.solid)
                 ),
@@ -145,7 +147,7 @@ class _ActivitySearchPageState extends State<ActivitySearchPage> {
                       value: item,
                       child: FittedBox(
                           fit: BoxFit.contain,
-                          child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
+                          child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
                       )
                     );
                   }).toList(),
@@ -153,18 +155,19 @@ class _ActivitySearchPageState extends State<ActivitySearchPage> {
                     return Container(
                       transform: Matrix4.translationValues(-10,0,0),
                       alignment: Alignment.centerLeft,
-                      child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
+                      child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
                     );
                   },
                   hint: Container(
                     transform: Matrix4.translationValues(-10,0,0),
-                    child: Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
+                    child: const Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
                   ),
                   searchHint: "Pilih Ruas",
                   onChanged: (value) {
                     setState(() {
                       if (value == null) {
-                        _selectedSegment = null;
+                        ///_selectedSegment = null;
+                        _selectedSegment = '';
                       } else {
                         _selectedSegment = value;
                       }
@@ -176,7 +179,7 @@ class _ActivitySearchPageState extends State<ActivitySearchPage> {
                   underline: Container(color:Colors.black, height:0.5),
                   icon: Container(
                     transform: Matrix4.translationValues(10,0,0),
-                    child: Icon(Icons.arrow_drop_down)
+                    child: const Icon(Icons.arrow_drop_down)
                   ),
                 ),
               )
@@ -189,7 +192,7 @@ class _ActivitySearchPageState extends State<ActivitySearchPage> {
                       value: item,
                       child: FittedBox(
                           fit: BoxFit.contain,
-                          child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
+                          child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
                       )
                     );
                   }).toList(),
@@ -197,18 +200,18 @@ class _ActivitySearchPageState extends State<ActivitySearchPage> {
                     return Container(
                       transform: Matrix4.translationValues(-10,0,0),
                       alignment: Alignment.centerLeft,
-                      child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
+                      child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
                     );
                   },
                   hint: Container(
                     transform: Matrix4.translationValues(-10,0,0),
-                    child: Text("Pilih Jabatan", style: TextStyle(color: Colors.black),)
+                    child: const Text("Pilih Jabatan", style: TextStyle(color: Colors.black),)
                   ),
                   searchHint: "Pilih Jabatan",
                   onChanged: (value) {
                     setState(() {
                       if (value == null) {
-                        _selectedPosition = null;
+                        _selectedPosition = '';
                       } else {
                         _selectedPosition = value;
                       }
@@ -220,62 +223,60 @@ class _ActivitySearchPageState extends State<ActivitySearchPage> {
                   underline: Container(color:Colors.black, height:0.5),
                   icon: Container(
                     transform: Matrix4.translationValues(10,0,0),
-                    child: Icon(Icons.arrow_drop_down)
+                    child: const Icon(Icons.arrow_drop_down)
                   ),
                 ),
               )
             ),
             prefCompanyField != "BPJT" ?
-            Container(
-              child: ListTile(
-                title: SearchChoices.single(
-                  items: roles.map((item) {
-                    return DropdownMenuItem(
-                      value: item,
-                      child: FittedBox(
-                          fit: BoxFit.contain,
-                          child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                      )
-                    );
-                  }).toList(),
-                  selectedValueWidgetFn: (item) {
-                    return Container(
-                      transform: Matrix4.translationValues(-10,0,0),
-                      alignment: Alignment.centerLeft,
-                      child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                    );
-                  },
-                  hint: Container(
+            ListTile(
+              title: SearchChoices.single(
+                items: roles.map((item) {
+                  return DropdownMenuItem(
+                    value: item,
+                    child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
+                    )
+                  );
+                }).toList(),
+                selectedValueWidgetFn: (item) {
+                  return Container(
                     transform: Matrix4.translationValues(-10,0,0),
-                    child: Text("Pilih Role", style: TextStyle(color: Colors.black),)
-                  ),
-                  searchHint: "Pilih Role",
-                  onChanged: (value) {
-                    setState(() {
-                      if (value == null) {
-                        _selectedRole = null;
-                      } else {
-                        _selectedRole = value;
-                      }
-                    });
-                  },
-                  value: _selectedRole,
-                  isExpanded: true,
-                  displayClearIcon: false,
-                  underline: Container(color:Colors.black, height:0.5),
-                  icon: Container(
-                    transform: Matrix4.translationValues(10,0,0),
-                    child: Icon(Icons.arrow_drop_down)
-                  ),
+                    alignment: Alignment.centerLeft,
+                    child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
+                  );
+                },
+                hint: Container(
+                  transform: Matrix4.translationValues(-10,0,0),
+                  child: const Text("Pilih Role", style: TextStyle(color: Colors.black),)
                 ),
-              )
+                searchHint: "Pilih Role",
+                onChanged: (value) {
+                  setState(() {
+                    if (value == null) {
+                      _selectedRole = '';
+                    } else {
+                      _selectedRole = value;
+                    }
+                  });
+                },
+                value: _selectedRole,
+                isExpanded: true,
+                displayClearIcon: false,
+                underline: Container(color:Colors.black, height:0.5),
+                icon: Container(
+                  transform: Matrix4.translationValues(10,0,0),
+                  child: const Icon(Icons.arrow_drop_down)
+                ),
+              ),
             )
             :
             Container(),
             Container(
               margin: const EdgeInsets.only(left: 15.0, right: 15.0, top: 5.0),
               child: FormBuilderDateTimePicker(
-                attribute: 'date',
+                name: 'date',
                 onChanged: (val) => {
                   setState(() {
                     _dateFrom = val.toString().split(' ')[0];
@@ -292,7 +293,7 @@ class _ActivitySearchPageState extends State<ActivitySearchPage> {
             Container(
               margin: const EdgeInsets.only(left: 15.0, right: 15.0, top: 5.0),
               child: FormBuilderDateTimePicker(
-                attribute: 'date',
+                name: 'date',
                 onChanged: (val) => {
                   setState(() {
                     _dateTo = val.toString().split(' ')[0];
@@ -306,9 +307,9 @@ class _ActivitySearchPageState extends State<ActivitySearchPage> {
                 format: DateFormat('yyyy-MM-dd'),
               ),
             ),
-            FlatButton(
+            ElevatedButton(
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => new ActivityPage(
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ActivityPage(
                   segment: _selectedSegment,
                   position: _selectedPosition,
                   dateFrom: _dateFrom,
@@ -317,8 +318,8 @@ class _ActivitySearchPageState extends State<ActivitySearchPage> {
                   role: _selectedRole
                 )));
               },
-              color: colorPrimary,
-              child: Text("Cari", style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(backgroundColor: colorPrimary),
+              child: const Text("Cari", style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

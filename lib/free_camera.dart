@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
-import 'package:bpjtteknik/utils/colors.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:gallery_saver/gallery_saver.dart';
 import 'package:geocoding/geocoding.dart';
@@ -11,7 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sweetalert/sweetalert.dart';
+// import 'package:sweetalert/sweetalert.dart';
 
 class FreeCameraPage extends StatefulWidget {
   @override
@@ -19,15 +19,15 @@ class FreeCameraPage extends StatefulWidget {
 }
 
 class _FreeCameraPageState extends State<FreeCameraPage> {
-  Position _position;
+  Position? _position;
   
   TextEditingController _staController = new TextEditingController();
 
   List<StreamSubscription<dynamic>> _streamSubscriptions = <StreamSubscription<dynamic>>[];
 
-  String districtSubdistrict;
-  String cityRegion;
-  String completeLocation;
+  String? districtSubdistrict;
+  String? cityRegion;
+  String? completeLocation;
 
   var prefId;
   var prefName;
@@ -39,7 +39,7 @@ class _FreeCameraPageState extends State<FreeCameraPage> {
   var prefIsApprove;
   var prefSegment;
 
-  File _image;
+  File? _image;
   
   _getPref() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -82,16 +82,15 @@ class _FreeCameraPageState extends State<FreeCameraPage> {
   }
 
   _saveToGallery() async {
-      if (_image != null && _image.path != null) {
-        GallerySaver.saveImage(_image.path).then((e) {
-          SweetAlert.show(
-            context,
-            title: "Sukses",
-            subtitle: "Gambar Tersimpan Pada Gallery",
-            style: SweetAlertStyle.success,
-            onPress: (bool isConfirm) {
-              return true;
-            }
+      if (_image != null && _image?.path != null) {
+        GallerySaver.saveImage(_image!.path).then((e) {
+          ArtSweetAlert.show(
+            context: context,
+            artDialogArgs: ArtDialogArgs(
+              type: ArtSweetAlertType.success,
+              title: "Sukses",
+              text: "Gambar Tersimpan Pada Gallery",
+            ),
           );
         });
       }
@@ -100,43 +99,59 @@ class _FreeCameraPageState extends State<FreeCameraPage> {
   Future _getImage() async {
 
     if (_staController.text == "") {
-      SweetAlert.show(
-        context,
-        title: "Gagal",
-        subtitle: "Silahkan masukkan STA terlebih dahulu.",
-        style: SweetAlertStyle.error,
-        onPress: (bool isConfirm) {
-          if (isConfirm) {
-            return;  
-          }
-          return;
-        }
+      ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+            type: ArtSweetAlertType.danger,
+            title: "Gagal",
+            text: "Silahkan masukkan STA terlebih dahulu."
+          )
       );
-
+      // SweetAlert.show(
+      //   context,
+      //   title: "Gagal",
+      //   subtitle: "Silahkan masukkan STA terlebih dahulu.",
+      //   style: SweetAlertStyle.error,
+      //   onPress: (bool isConfirm) {
+      //     if (isConfirm) {
+      //       return;
+      //     }
+      //     return;
+      //   }
+      // );
       return;
     }
 
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('dd-MM-yyyy – kk:mm').format(now);
 
-    var image = await ImagePicker.pickImage(source: ImageSource.camera);
-    img.Image im = img.decodeImage(image.readAsBytesSync());
+    var imagePicker =  ImagePicker();
+    var image = await imagePicker.pickImage(source: ImageSource.camera);
+    var imageBytes = await image!.readAsBytes();
+    img.Image? im = img.decodeImage(imageBytes);
 
-    img.Image convertImage = img.copyResize(im, width: 800);
+    img.Image convertImage = img.copyResize(im!, width: 800);
 
-    img.Image drawName = img.drawString(img.Image.from(convertImage), img.arial_24, 0, 0, prefName);
-    img.Image drawDateTime = img.drawString(img.Image.from(drawName), img.arial_24, 0, 30, formattedDate);
-    img.Image drawSegment = img.drawString(img.Image.from(drawDateTime), img.arial_24, 0, 60, prefSegment);
-    img.Image drawLongLat = img.drawString(img.Image.from(drawSegment), img.arial_24, 0, 90, '${_position.latitude} ${_position.longitude}');
-    img.Image drawDistrictSubdistrict = img.drawString(img.Image.from(drawLongLat), img.arial_24, 0, 120,districtSubdistrict);
-    img.Image drawCityRegion = img.drawString(img.Image.from(drawDistrictSubdistrict), img.arial_24, 0, 150,cityRegion);
-    img.Image drawSTA = img.drawString(img.Image.from(drawCityRegion), img.arial_24, 0, 180, 'STA ${_staController.text}');
-    img.Image drawAltitude = img.drawString(img.Image.from(drawSTA), img.arial_24, 0, 210, 'ALT ${_position.altitude}');
+    img.Image drawName = img.drawString(img.Image.from(convertImage), font: img.arial24,  prefName);
+    img.Image drawDateTime = img.drawString(img.Image.from(drawName), font: img.arial24, formattedDate);
+    img.Image drawSegment = img.drawString(img.Image.from(drawDateTime), font: img.arial24, prefSegment);
+    img.Image drawLongLat = img.drawString(img.Image.from(drawSegment), font: img.arial24, '${_position?.latitude} ${_position?.longitude}');
+    img.Image drawDistrictSubdistrict = img.drawString(img.Image.from(drawLongLat), font: img.arial24,districtSubdistrict!);
+    img.Image drawCityRegion = img.drawString(img.Image.from(drawDistrictSubdistrict), font: img.arial24, cityRegion!);
+    img.Image drawSTA = img.drawString(img.Image.from(drawCityRegion), font: img.arial24, 'STA ${_staController.text}');
+    img.Image drawAltitude = img.drawString(img.Image.from(drawSTA), font: img.arial24, 'ALT ${_position?.altitude}');
 
-    File(image.path).writeAsBytesSync(img.encodeNamedImage(drawAltitude, image.path));
+    var encodedImage = img.encodeNamedImage(drawAltitude as String, image.path as img.Image);
+    File(image.path).writeAsStringSync(encodedImage as String);
     setState(() {
-      _image = image;
+      _image = image as File?;
     });
+
+    // var encodedImage = img.encodeNamedImage(drawAltitude, image.path);
+    // File(image.path).writeAsStringSync(encodedImage);
+    // setState(() {
+    //   _image = image;
+    // });
   }
   
   @override
@@ -159,18 +174,17 @@ class _FreeCameraPageState extends State<FreeCameraPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Free Camera'),
+        title: const Text('Free Camera'),
         backgroundColor: colorPrimary,
       ),
       body: Container(
-        padding: EdgeInsets.all(15.0),
+        padding: const EdgeInsets.all(15.0),
         child: ListView(
           children: [
             Text(
-              completeLocation == null ?
-              "Sedang Mengkalibrasi Posisi Anda" :
-              completeLocation,
-              style: TextStyle(
+              completeLocation ??
+              "Sedang Mengkalibrasi Posisi Anda",
+              style: const TextStyle(
                 color: Colors.grey,
                 fontSize: 12.0,
                 fontStyle: FontStyle.italic
@@ -179,53 +193,57 @@ class _FreeCameraPageState extends State<FreeCameraPage> {
             Text(
               _position == null ?
               "Sedang Mengkalibrasi Koordinat Anda" :
-              "Lat : ${_position.latitude.toString()}, Long : ${_position.longitude.toString()}",
-              style: TextStyle(
+              "Lat : ${_position?.latitude.toString()}, Long : ${_position?.longitude.toString()}",
+              style: const TextStyle(
                 color: Colors.grey,
                 fontSize: 12.0,
                 fontStyle: FontStyle.italic
               ),
             ),
-            SizedBox(height: 10.0),
+            const SizedBox(height: 10.0),
             Text(
               _position == null ?
               "Harap Tunggu Sedang Mengkalibrasi Jarak Akurat Anda" :
-              "Akurat Hingga "+_position.accuracy.toStringAsFixed(0).toString()+" Meter", 
-              style: TextStyle(
+              "Akurat Hingga "+_position!.accuracy.toStringAsFixed(0).toString()+" Meter",
+              style: const TextStyle(
                 color: Colors.black, 
                 fontSize: 20.0, 
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center
             ),
-            SizedBox(height: 10.0),
+            const SizedBox(height: 10.0),
             Container(
               padding: const EdgeInsets.only(left: 10.0),
-              child: Text("Isikan STA")
+              child: const Text("Isikan STA")
             ),
             Container(
               child: ListTile(
                 title: TextField(
                   controller: _staController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: "STA",
                   ),
                   minLines: 1
                 ),
               ),
             ),
-            SizedBox(height: 10.0),
-            displaySelectedFile(_image),
+            const SizedBox(height: 10.0),
+            displaySelectedFile(_image!),
             Container(
-              child: Text('*Klik Pada Gambar Diatas Untuk Mengambil Foto', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12.0),textAlign: TextAlign.center,),
+              child: const Text('*Klik Pada Gambar Diatas Untuk Mengambil Foto', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12.0),textAlign: TextAlign.center,),
             ),
-            SizedBox(height: 10.0),
+            const SizedBox(height: 10.0),
             Container(
               margin: EdgeInsets.only(right: MediaQuery.of(context).size.width * 0.25, left: MediaQuery.of(context).size.width * 0.25),
               // width: MediaQuery.of(context).size.width * 0.35,
               child: MaterialButton(
-                padding: EdgeInsets.all(2.0),
-                child: Column(
+                padding: const EdgeInsets.all(2.0),
+                onPressed: () {
+                  _saveToGallery();
+                },
+                color: colorPrimary,
+                child: const Column(
                   children: <Widget>[
                     Padding(
                       padding: EdgeInsets.all(3.0),
@@ -233,10 +251,6 @@ class _FreeCameraPageState extends State<FreeCameraPage> {
                     )
                   ],
                 ),
-                onPressed: () {
-                  _saveToGallery();
-                },
-                color: colorPrimary,
                 // disabledColor: Colors.grey,
               ),
             ),
@@ -255,23 +269,18 @@ class _FreeCameraPageState extends State<FreeCameraPage> {
           decoration: BoxDecoration(
             color: colorTertiary.withOpacity(0.2),
             shape: BoxShape.rectangle,
-            borderRadius: BorderRadius.all(Radius.circular(8.0)),
+            borderRadius: const BorderRadius.all(Radius.circular(8.0)),
             border: Border.all(width: 3.0, color: HexColor("D8BFD8")),
           ),
           child: Padding(
-            padding: EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(10.0),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12.0),
-              child: file == null
-                ? Image.asset(
-                  "assets/images/person_6x8.png",
-                  height: 100.0,
-                )
-                : Image.file(file, fit: BoxFit.fitHeight,),
+              child: Image.file(File("assets/images/person_6x8.png"), fit: BoxFit.fitHeight),
             ),
-          )
+          ),
         )
-      ),
+      )
     );
   }
 }

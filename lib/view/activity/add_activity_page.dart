@@ -2,11 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/helper/db_activities.dart';
-import 'package:bpjtteknik/helper/db_activity_details.dart';
-import 'package:bpjtteknik/utils/utils.dart';
-import 'package:bpjtteknik/view/activity/activity_page.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/db_activities.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/db_activity_details.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/utils.dart';
+import 'package:bpjt_k_gis_mobile_master/view/activity/activity_page.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
@@ -14,11 +15,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:package_info/package_info.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+// import 'package:modal_progress_hud/modal_progress_hud.dart';
+// import 'package:package_info/package_info.dart';
 import 'package:search_choices/search_choices.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sweetalert/sweetalert.dart';
+// import 'package:sweetalert/sweetalert.dart';
 
 class AddActivityPage extends StatefulWidget {
   @override
@@ -28,14 +31,14 @@ class AddActivityPage extends StatefulWidget {
 class _AddActivityPageState extends State<AddActivityPage> {
   bool _loading = false;
 
-  String _selectedSegment;
-  String _selectedPriorityStatus;
-  String districtSubdistrict;
-  String cityRegion;
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String _selectedSegment;
+  late String _selectedPriorityStatus;
+  late String districtSubdistrict;
+  late String cityRegion;
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
 
   var prefId;
   var prefName;
@@ -47,15 +50,15 @@ class _AddActivityPageState extends State<AddActivityPage> {
   var prefIsApprove;
   var prefSegment;
 
-  Position _position;
+  late Position _position;
   
   TextEditingController _activityController = new TextEditingController();
   TextEditingController _locationController = new TextEditingController();
   TextEditingController _staController = new TextEditingController();
   
   List<StreamSubscription<dynamic>> _streamSubscriptions = <StreamSubscription<dynamic>>[];
-  List prefSegments = List();
-  List _segments = List();
+  List prefSegments = [];
+  List _segments = [];
   List<String> _fileList = [];
   
   final ImagePicker picker = ImagePicker();
@@ -92,7 +95,8 @@ class _AddActivityPageState extends State<AddActivityPage> {
     prefRoleId = prefs.getString('role_id');
     prefIsApprove = prefs.getBool('is_approve');
     prefSegment = prefs.getString('segment');
-    prefSegments = jsonDecode(prefs.getString('segments'));
+    String? segmentsString = prefs.getString('segments');
+    prefSegments = segmentsString != null ? jsonDecode(segmentsString) : [];
   }
   
   _submit() async {
@@ -104,17 +108,23 @@ class _AddActivityPageState extends State<AddActivityPage> {
       setState(() {
         _loading = false;
       });
-
-      SweetAlert.show(
-        context,
-        title: "Error",
-        subtitle: "Silahkan Pilih Ruas",
-        style: SweetAlertStyle.error,
-        onPress: (bool isConfirm) {
-          return true;
-        }
+      ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+              type: ArtSweetAlertType.danger,
+              title: "Error",
+              text: "Silahkan Pilih Ruas"
+          )
       );
-
+      // SweetAlert.show(
+      //   context,
+      //   title: "Error",
+      //   subtitle: "Silahkan Pilih Ruas",
+      //   style: SweetAlertStyle.error,
+      //   onPress: (bool isConfirm) {
+      //     return true;
+      //   }
+      // );
       return;
     }
 
@@ -122,17 +132,23 @@ class _AddActivityPageState extends State<AddActivityPage> {
       setState(() {
         _loading = false;
       });
-
-      SweetAlert.show(
-        context,
-        title: "Error",
-        subtitle: "Laporan Harus Diisi",
-        style: SweetAlertStyle.error,
-        onPress: (bool isConfirm) {
-          return true;
-        }
+      ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+              type: ArtSweetAlertType.danger,
+              title: "Error",
+              text: "Laporan Harus Diisi"
+          )
       );
-
+      // SweetAlert.show(
+      //   context,
+      //   title: "Error",
+      //   subtitle: "Laporan Harus Diisi",
+      //   style: SweetAlertStyle.error,
+      //   onPress: (bool isConfirm) {
+      //     return true;
+      //   }
+      // );
       return;
     }
 
@@ -140,17 +156,23 @@ class _AddActivityPageState extends State<AddActivityPage> {
       setState(() {
         _loading = false;
       });
-
-      SweetAlert.show(
-        context,
-        title: "Error",
-        subtitle: "Lokasi Harus Diisi",
-        style: SweetAlertStyle.error,
-        onPress: (bool isConfirm) {
-          return true;
-        }
+      ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+              type: ArtSweetAlertType.danger,
+              title: "Error",
+              text: "Lokasi Harus Diisi"
+          )
       );
-
+      // SweetAlert.show(
+      //   context,
+      //   title: "Error",
+      //   subtitle: "Lokasi Harus Diisi",
+      //   style: SweetAlertStyle.error,
+      //   onPress: (bool isConfirm) {
+      //     return true;
+      //   }
+      // );
       return;
     }
 
@@ -158,24 +180,30 @@ class _AddActivityPageState extends State<AddActivityPage> {
       setState(() {
         _loading = false;
       });
-
-      SweetAlert.show(
-        context,
-        title: "Error",
-        subtitle: "Harap Isikan File/Foto Laporan",
-        style: SweetAlertStyle.error,
-        onPress: (bool isConfirm) {
-          return true;
-        }
+      ArtSweetAlert.show(
+          context: context,
+          artDialogArgs: ArtDialogArgs(
+              type: ArtSweetAlertType.danger,
+              title: "Error",
+              text: "Harap Isikan File/Foto Laporan"
+          )
       );
-
+      // SweetAlert.show(
+      //   context,
+      //   title: "Error",
+      //   subtitle: "Harap Isikan File/Foto Laporan",
+      //   style: SweetAlertStyle.error,
+      //   onPress: (bool isConfirm) {
+      //     return true;
+      //   }
+      // );
       return;
     }
 
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd').format(now);
 
-    Map<String, dynamic> params = Map<String, dynamic>();
+    Map<String, dynamic> params = <String, dynamic>{};
     params["user_id"] = prefId;
     params["activity"] = _activityController.text;
     params["long"] = _position.longitude.toString();
@@ -186,26 +214,37 @@ class _AddActivityPageState extends State<AddActivityPage> {
     params["date"] = formattedDate;
     dbActivity.insert(params).then((value) {
       for (var i = 0; i < _fileList.length; i++) {
-        Map<String, dynamic> mapActivityDetail = Map<String, dynamic>();
+        Map<String, dynamic> mapActivityDetail = <String, dynamic>{};
         mapActivityDetail['activity_id'] = value.toString();
         mapActivityDetail['files'] = _fileList[i];
 
         dbActivityDetail.insert(mapActivityDetail);
       }
     });
-
-    SweetAlert.show(context,
-      title: "Sukses",
-      subtitle: "Sukses melaporkan kegiatan",
-      style: SweetAlertStyle.success,
-      onPress: (bool isConfirm) {
-        if (isConfirm) {
-          Navigator.of(context).pop();
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => ActivityPage()));
-        }
-        return;
-      }
+    ArtSweetAlert response = await ArtSweetAlert.show(
+      context: context,
+      artDialogArgs: ArtDialogArgs(
+        type: ArtSweetAlertType.success,
+        title: "Sukses",
+        text: "Gambar Tersimpan Pada Gallery",
+      ),
     );
+    if(response != null) {
+      Navigator.of(context).pop();
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => ActivityPage()));
+    }
+    // SweetAlert.show(context,
+    //   title: "Sukses",
+    //   subtitle: "Sukses melaporkan kegiatan",
+    //   style: SweetAlertStyle.success,
+    //   onPress: (bool isConfirm) {
+    //     if (isConfirm) {
+    //       Navigator.of(context).pop();
+    //       Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => ActivityPage()));
+    //     }
+    //     return;
+    //   }
+    // );
   }
   
   @override
@@ -234,7 +273,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
       List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
       setState(() {
         _position = position;
-        _locationController = new TextEditingController(text: '${placemarks.first.subLocality}, ${placemarks.first.locality}, ${placemarks.first.subAdministrativeArea}, ${placemarks.first.administrativeArea}');
+        _locationController = TextEditingController(text: '${placemarks.first.subLocality}, ${placemarks.first.locality}, ${placemarks.first.subAdministrativeArea}, ${placemarks.first.administrativeArea}');
         districtSubdistrict = "${placemarks.first.subLocality}, ${placemarks.first.locality}";
         cityRegion = "${placemarks.first.subAdministrativeArea}, ${placemarks.first.administrativeArea}";
       });
@@ -260,28 +299,26 @@ class _AddActivityPageState extends State<AddActivityPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Lapor Kegiatan'),
+        title: const Text('Lapor Kegiatan'),
         backgroundColor: colorPrimary,
       ),
       body: ModalProgressHUD(
-        child: Container(
-          child: ListView(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-              ),
-              _buildTextFields(context),
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-              ),
-              _buildButtons(),
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-              ),
-            ],
-          ),
-        ),
         inAsyncCall: _loading,
+        child: ListView(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(10.0),
+            ),
+            _buildTextFields(context),
+            const Padding(
+              padding: EdgeInsets.all(10.0),
+            ),
+            _buildButtons(),
+            const Padding(
+              padding: EdgeInsets.all(10.0),
+            ),
+          ],
+        ),
       )
     );
   }
@@ -294,98 +331,90 @@ class _AddActivityPageState extends State<AddActivityPage> {
           children: [
             Container(
               padding: const EdgeInsets.only(left: 10.0),
-              child: Text("Ruas")
+              child: const Text("Ruas")
             ),
-            Container(
-              child: ListTile(
-                title: SearchChoices.single(
-                  items: _segments.map((item) {
-                    return DropdownMenuItem(
-                      value: item,
-                      child: FittedBox(
-                          fit: BoxFit.contain,
-                          child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                      )
-                    );
-                  }).toList(),
-                  selectedValueWidgetFn: (item) {
-                    return Container(
-                      transform: Matrix4.translationValues(-10,0,0),
-                      alignment: Alignment.centerLeft,
-                      child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                    );
-                  },
-                  hint: Container(
+            ListTile(
+              title: SearchChoices.single(
+                items: _segments.map((item) {
+                  return DropdownMenuItem(
+                    value: item,
+                    child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
+                    )
+                  );
+                }).toList(),
+                selectedValueWidgetFn: (item) {
+                  return Container(
                     transform: Matrix4.translationValues(-10,0,0),
-                    child: Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
-                  ),
-                  searchHint: "Pilih Ruas",
-                  onChanged: (value) {
-                    setState(() {
-                      if (value == null) {
-                        _selectedSegment = null;
-                      } else {
-                        _selectedSegment = value;
-                      }
-                    });
-                  },
-                  value: _selectedSegment,
-                  isExpanded: true,
-                  displayClearIcon: false,
-                  underline: Container(color:Colors.black, height:0.5),
-                  icon: Container(
-                    transform: Matrix4.translationValues(10,0,0),
-                    child: Icon(Icons.arrow_drop_down)
-                  ),
+                    alignment: Alignment.centerLeft,
+                    child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
+                  );
+                },
+                hint: Container(
+                  transform: Matrix4.translationValues(-10,0,0),
+                  child: const Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
                 ),
-              )
+                searchHint: "Pilih Ruas",
+                onChanged: (value) {
+                  setState(() {
+                    if (value == null) {
+                      _selectedSegment = '';
+                    } else {
+                      _selectedSegment = value;
+                    }
+                  });
+                },
+                value: _selectedSegment,
+                isExpanded: true,
+                displayClearIcon: false,
+                underline: Container(color:Colors.black, height:0.5),
+                icon: Container(
+                  transform: Matrix4.translationValues(10,0,0),
+                  child: const Icon(Icons.arrow_drop_down)
+                ),
+              ),
             ),
           ],
         ),
         Container(
           padding: const EdgeInsets.only(left: 10.0),
-          child: Text("Lokasi")
+          child: const Text("Lokasi")
         ),
-        Container(
-          child: ListTile(
-            title: TextField(
-              controller: _locationController,
-              decoration: InputDecoration(
-                hintText: "Isi Lokasi...",
-              ),
-              minLines: 2,
-              maxLines: 4,
+        ListTile(
+          title: TextField(
+            controller: _locationController,
+            decoration: const InputDecoration(
+              hintText: "Isi Lokasi...",
             ),
+            minLines: 2,
+            maxLines: 4,
           ),
         ),
         Container(
           padding: const EdgeInsets.only(left: 10.0),
-          child: Text("STA")
+          child: const Text("STA")
         ),
-        Container(
-          child: ListTile(
-            title: TextField(
-              controller: _staController,
-              decoration: InputDecoration(
-                hintText: "STA",
-              ),
-              minLines: 1
+        ListTile(
+          title: TextField(
+            controller: _staController,
+            decoration: const InputDecoration(
+              hintText: "STA",
             ),
+            minLines: 1
           ),
         ),
         Container(
           padding: const EdgeInsets.only(left: 10.0),
-          child: Text("Laporan")
+          child: const Text("Laporan")
         ),
-        Container(
-          child: ListTile(
-            title: TextField(
-              controller: _activityController,
-              decoration: InputDecoration(
-                hintText: "Isi Laporan...",
-              ),
-              maxLines: 4,
+        ListTile(
+          title: TextField(
+            controller: _activityController,
+            decoration: const InputDecoration(
+              hintText: "Isi Laporan...",
             ),
+            maxLines: 4,
           ),
         ),
         // Container(
@@ -429,7 +458,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
         // ),
         Container(
           padding: const EdgeInsets.only(left: 10.0, bottom: 10.0),
-          child: Text("File Laporan")
+          child: const Text("File Laporan")
         ),
         Container(
           child: displaySelectedFile(),
@@ -439,27 +468,27 @@ class _AddActivityPageState extends State<AddActivityPage> {
   }
 
   Widget _buildButtons() {
-    return Container(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: <Widget>[
-          Container(
-            width: MediaQuery.of(context).size.width * 0.9,
-              child: RaisedButton(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: <Widget>[
+        SizedBox(
+          width: MediaQuery.of(context).size.width * 0.9,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
                 elevation: 0.8,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24),
                 ),
-                onPressed: () {
-                  _submit();
-                },
-                padding: EdgeInsets.all(12),
-                color: colorPrimary,
-                child: Text('Simpan', style: TextStyle(color: Colors.white)),
+                padding: const EdgeInsets.all(12),
+                backgroundColor: colorPrimary,
               ),
-          ),
-        ],
-      ),
+              onPressed: () {
+                _submit();
+              },
+              child: const Text('Simpan', style: TextStyle(color: Colors.white)),
+            ),
+        ),
+      ],
     );
   }
 
@@ -467,7 +496,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
     return Container(
       // width: 80.0,
       height: 150,
-      margin: EdgeInsets.only(bottom: 32),
+      margin: const EdgeInsets.only(bottom: 32),
       alignment: Alignment.center,
       child: ListView(
         scrollDirection: Axis.horizontal,
@@ -486,7 +515,8 @@ class _AddActivityPageState extends State<AddActivityPage> {
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     child: Stack(
-                      overflow: Overflow.visible,
+                      // overflow: Overflow.visible,
+                      clipBehavior: Clip.none,
                       children: [
                         Container(
                           width: 100.0,
@@ -505,9 +535,9 @@ class _AddActivityPageState extends State<AddActivityPage> {
                           right: -8,
                           child: InkWell(
                             onTap: () => removeFile(index),
-                            customBorder: CircleBorder(),
+                            customBorder: const CircleBorder(),
                             child: Container(
-                              padding: EdgeInsets.all(4.0),
+                              padding: const EdgeInsets.all(4.0),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 border: Border.all(color: Colors.black),
@@ -530,7 +560,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
             },
           ),
           Padding(
-            padding: EdgeInsets.only(left: _fileList.length == 0 ? 20.0 : 12, right: 20.0),
+            padding: EdgeInsets.only(left: _fileList.isEmpty ? 20.0 : 12, right: 20.0),
             child: InkWell(
               onTap: () => _pickImage(),
               customBorder: RoundedRectangleBorder(
@@ -539,7 +569,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
               child: Container(
                 width: 80.0,
                 height: 80.0,
-                padding: EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
                   color: Colors.transparent,
                   borderRadius: BorderRadius.circular(12.0),
@@ -556,65 +586,89 @@ class _AddActivityPageState extends State<AddActivityPage> {
       ),
     );
   }
-
   void _pickImage() async {
     if (_staController.text == "") {
-      SweetAlert.show(
-        context,
-        title: "Error",
-        subtitle: "STA Harus Diisi",
-        style: SweetAlertStyle.error,
-        onPress: (bool isConfirm) {
-          return true;
-        }
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.danger,
+          title: "Error",
+          text: "STA Harus Diisi",
+        ),
       );
-
+      // SweetAlert.show(
+      //   context,
+      //   title: "Error",
+      //   subtitle: "STA Harus Diisi",
+      //   style: SweetAlertStyle.error,
+      //   onPress: (bool isConfirm) {
+      //     return true;
+      //   }
+      // );
       return;
     }
-
     if (_selectedSegment == null) {
-      SweetAlert.show(
-        context,
-        title: "Error",
-        subtitle: "Silahkan Pilih Ruas",
-        style: SweetAlertStyle.error,
-        onPress: (bool isConfirm) {
-          return true;
-        }
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.danger,
+          title: "Error",
+          text: "Silahkan Pilih Ruas",
+        ),
       );
-
+      // SweetAlert.show(
+      //   context,
+      //   title: "Error",
+      //   subtitle: "Silahkan Pilih Ruas",
+      //   style: SweetAlertStyle.error,
+      //   onPress: (bool isConfirm) {
+      //     return true;
+      //   }
+      // );
       return;
     }
-
     if (_activityController.text == "") {
-      SweetAlert.show(
-        context,
-        title: "Error",
-        subtitle: "Laporan Harus Diisi",
-        style: SweetAlertStyle.error,
-        onPress: (bool isConfirm) {
-          return true;
-        }
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.danger,
+          title: "Error",
+          text: "Laporan Harus Diisi",
+        ),
       );
-
+      // SweetAlert.show(
+      //   context,
+      //   title: "Error",
+      //   subtitle: "Laporan Harus Diisi",
+      //   style: SweetAlertStyle.error,
+      //   onPress: (bool isConfirm) {
+      //     return true;
+      //   }
+      // );
       return;
     }
-
     if (_locationController.text == "") {
-      SweetAlert.show(
-        context,
-        title: "Error",
-        subtitle: "Lokasi Harus Diisi",
-        style: SweetAlertStyle.error,
-        onPress: (bool isConfirm) {
-          return true;
-        }
+      ArtSweetAlert.show(
+        context: context,
+        artDialogArgs: ArtDialogArgs(
+          type: ArtSweetAlertType.danger,
+          title: "Error",
+          text: "Lokasi Harus Diisi",
+        ),
       );
-
+      // SweetAlert.show(
+      //   context,
+      //   title: "Error",
+      //   subtitle: "Lokasi Harus Diisi",
+      //   style: SweetAlertStyle.error,
+      //   onPress: (bool isConfirm) {
+      //     return true;
+      //   }
+      // );
       return;
     }
 
-    PickedFile file;
+    PickedFile? file;
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('dd-MM-yyyy – kk:mm').format(now);
     
@@ -622,15 +676,15 @@ class _AddActivityPageState extends State<AddActivityPage> {
       context: context,
       builder: (BuildContext context) {
         return SimpleDialog(
-          title: Text("Pilih Foto/File"),
+          title: const Text("Pilih Foto/File"),
           children: <Widget>[
             SimpleDialogOption(
               onPressed: () async {
                 Navigator.pop(context); //close the dialog box
                 file = await picker.getImage(source: ImageSource.gallery);
                 setState(() {
-                  _fileList.add(file.path);
-                  if (file.path != "") {
+                  _fileList.add(file!.path);
+                  if (file?.path != "") {
                     
                   }
                 });
@@ -640,48 +694,56 @@ class _AddActivityPageState extends State<AddActivityPage> {
             SimpleDialogOption(
               onPressed: () async {
                 Navigator.pop(context); //close the dialog box
-                file = await picker.getImage(source: ImageSource.camera);
+                final picker = ImagePicker();
+                XFile? file = await picker.pickImage(source: ImageSource.camera);
                 setState(() {
                   _loading = true;
                 });
-                img.Image im = img.decodeImage(File(file.path).readAsBytesSync());
+                img.Image? im = img.decodeImage(File(file!.path).readAsBytesSync());
+                // img.Image im = img.decodeImage(File(file.path).readAsBytesSync());
 
-                img.Image convertImage = img.copyResize(im, width: 800);
+                img.Image convertImage = img.copyResize(im!, width: 800);
+                img.Image drawName = img.drawString(img.Image.from(convertImage), font: img.arial24, prefName);
+                img.Image drawDateTime = img.drawString(img.Image.from(drawName), font: img.arial24, formattedDate);
+                img.Image drawSegment = img.drawString(img.Image.from(drawDateTime), font: img.arial24, _selectedSegment);
+                img.Image drawLongLat = img.drawString(img.Image.from(drawSegment), font: img.arial24, '${_position.latitude} ${_position.longitude}');
+                img.Image drawDistrictSubdistrict = img.drawString(img.Image.from(drawLongLat), font: img.arial24, districtSubdistrict);
+                img.Image drawCityRegion = img.drawString(img.Image.from(drawDistrictSubdistrict), font: img.arial24, cityRegion);
+                img.Image drawSTA = img.drawString(img.Image.from(drawCityRegion), font: img.arial24, _staController.text);
+                img.Image drawAltitude = img.drawString(img.Image.from(drawSTA), font: img.arial24, '${_position.altitude}');
+                // img.Image drawDistrictSubdistrict = img.drawString(img.Image.from(drawLongLat), img.arial_24, 0, 120,districtSubdistrict);
+                // img.Image drawCityRegion = img.drawString(img.Image.from(drawDistrictSubdistrict), img.arial_24, 0, 150,cityRegion);
+                // img.Image drawSTA = img.drawString(img.Image.from(drawCityRegion), img.arial_24, 0, 180, _staController.text);
+                // img.Image drawAltitude = img.drawString(img.Image.from(drawSTA), img.arial_24, 0, 210, '${_position.altitude}');
 
-                img.Image drawName = img.drawString(img.Image.from(convertImage), img.arial_24, 0, 0, prefName);
-                img.Image drawDateTime = img.drawString(img.Image.from(drawName), img.arial_24, 0, 30, formattedDate);
-                img.Image drawSegment = img.drawString(img.Image.from(drawDateTime), img.arial_24, 0, 60, _selectedSegment);
-                img.Image drawLongLat = img.drawString(img.Image.from(drawSegment), img.arial_24, 0, 90, '${_position.latitude} ${_position.longitude}');
-                img.Image drawDistrictSubdistrict = img.drawString(img.Image.from(drawLongLat), img.arial_24, 0, 120,districtSubdistrict);
-                img.Image drawCityRegion = img.drawString(img.Image.from(drawDistrictSubdistrict), img.arial_24, 0, 150,cityRegion);
-                img.Image drawSTA = img.drawString(img.Image.from(drawCityRegion), img.arial_24, 0, 180, _staController.text);
-                img.Image drawAltitude = img.drawString(img.Image.from(drawSTA), img.arial_24, 0, 210, '${_position.altitude}');
-                
-                File(file.path).writeAsBytesSync(img.encodeNamedImage(drawAltitude, file.path));
+                File(file!.path).writeAsBytesSync(img.encodeNamedImage(drawAltitude as String, file?.path as img.Image)!.toList());
+                // File(file.path).writeAsBytesSync(img.encodeNamedImage(drawAltitude, file.path));
+
 
                 setState(() {
-                  if (file != null) {
-                    _fileList.add(file.path);
-                  }
-                  if (file.path != "") {
-                    
-                  }
+                  _fileList.add(file!.path);
+                  if (file?.path != "") {}
                   _loading = false;
                 });
+                // setState(() {
+                //   _fileList.add(file.path);
+                //   if (file.path != "") {}
+                //   _loading = false;
+                // });
               },
               child: const Text('Kamera'),
             ),
             SimpleDialogOption(
               onPressed: () async {
                 Navigator.pop(context);
-                FilePickerResult pickfileResult = await FilePicker.platform.pickFiles(
+                FilePickerResult? pickfileResult = await FilePicker.platform.pickFiles(
                   type: FileType.custom,
                   allowedExtensions: ['pdf'],
                 );
 
-                String _path = pickfileResult.files.first.path;
+                String? _path = pickfileResult?.files.first.path;
                 setState(() {
-                  _fileList.add(_path);
+                  _fileList.add(_path!);
                   if (_path != "") {
                     
                   }
@@ -702,16 +764,16 @@ class _AddActivityPageState extends State<AddActivityPage> {
   }
 
   Widget previewSelectedFile(String path) {
-    String extension;
-    String filename;
+    late String extension;
+    late String filename;
 
-    if (path != null && path != "") {
+    if (path != "") {
       filename = path.split('/').last;
       extension = path.split('.').last;
     }
     
     return SizedBox(
-      child: path == "/" || path == null
+      child: path == "/"
           ? Image.asset("assets/images/no_image.png",)
           : (extension == "pdf")
               ? Column(
@@ -720,7 +782,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
                       "assets/images/pdf_placeholder.png",
                       // height: 150.0,
                     ),
-                    Text(filename, style: TextStyle(fontSize: 10.0))
+                    Text(filename, style: const TextStyle(fontSize: 10.0))
                   ],
                 )
               : Image.file(File(path)),

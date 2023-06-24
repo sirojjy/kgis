@@ -1,19 +1,21 @@
 import 'dart:convert';
 
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/helper/db.dart';
-import 'package:bpjtteknik/utils/colors.dart';
-import 'package:bpjtteknik/view/activity/activity_page.dart';
-import 'package:bpjtteknik/view/attendance/attendance_list_page.dart';
-import 'package:bpjtteknik/view/dashboard/dashboard_page.dart';
-import 'package:bpjtteknik/view/summary/summary_search_page.dart';
-import 'package:bpjtteknik/view/tracking/problem_list_page.dart';
-import 'package:bpjtteknik/view/user/user_page.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/db.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/colors.dart';
+import 'package:bpjt_k_gis_mobile_master/view/activity/activity_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/attendance/attendance_list_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/dashboard/dashboard_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/summary/summary_search_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/tracking/problem_list_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/user/user_page.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:package_info/package_info.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+// import 'package:modal_progress_hud/modal_progress_hud.dart';
+// import 'package:package_info/package_info.dart';
 import 'package:search_choices/search_choices.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -43,10 +45,10 @@ class _SummaryPageState extends State<SummaryPage> {
 
   bool isPlaying = false;
 
-  String _selectedStatus;
-  String _selectedSubStatus;
-  String _selectedRegion;
-  String _selectedSegment;
+  String? _selectedStatus;
+  String? _selectedSubStatus;
+  String? _selectedRegion;
+  String? _selectedSegment;
 
   var prefId;
   var prefName;
@@ -58,9 +60,9 @@ class _SummaryPageState extends State<SummaryPage> {
   var prefIsApprove;
   var prefSegment;
   
-  List prefSegments = List();
-  List _segmentRegion = List();
-  List _segment = List();
+  List prefSegments = [];
+  List _segmentRegion = [];
+  List _segment = [];
 
   var _dataSummary;
   var _totalUserPerCategory;
@@ -75,10 +77,10 @@ class _SummaryPageState extends State<SummaryPage> {
   var _attendanceChart;
   var _totalUserPerSegmentChart;
 
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -89,15 +91,16 @@ class _SummaryPageState extends State<SummaryPage> {
       buildNumber = packageInfo.buildNumber;
     });
   }
-  
+
+  ///Perlu dicek apakah _selectedRegion _selectedSegment nullable/tidak
   _getData({bool isOnlySummary = false}) async {
-    await API.getSummaryData(widget.dateFrom, widget.dateTo, _selectedRegion, _selectedSegment, version).then((response) {
+    await API.getSummaryData(widget.dateFrom, widget.dateTo, _selectedRegion!, _selectedSegment!, version).then((response) {
       setState(() {
         _dataSummary = response;
       });
     });
 
-    await API.getTotalUserPerCategory(widget.dateFrom, widget.dateTo, _selectedRegion, _selectedSegment, version).then((response) {
+    await API.getTotalUserPerCategory(widget.dateFrom, widget.dateTo, _selectedRegion!, _selectedSegment!, version).then((response) {
       setState(() {
         _totalUserPerCategory = response;
       });
@@ -165,7 +168,7 @@ class _SummaryPageState extends State<SummaryPage> {
     prefRoleId = prefs.getString('role_id');
     prefIsApprove = prefs.getBool('is_approve');
     prefSegment = prefs.getString('segment');
-    prefSegments = jsonDecode(prefs.getString('segments'));
+    prefSegments = jsonDecode(prefs.getString('segments')!);
   }
   
   @override
@@ -194,16 +197,16 @@ class _SummaryPageState extends State<SummaryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Ringkasan Data'),
+        title: const Text('Ringkasan Data'),
         backgroundColor: colorPrimary,
         actions: [
           GestureDetector(
               onTap: () async {
                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => DashboardPage()));
               },
-              child: Icon(Icons.home, color: Colors.white,),
+              child: const Icon(Icons.home, color: Colors.white,),
           ),
-          SizedBox(width: 10.0,),
+          const SizedBox(width: 10.0,),
           GestureDetector(
             onTap: () async {
               setState(() {
@@ -219,34 +222,35 @@ class _SummaryPageState extends State<SummaryPage> {
               children: [
                 Container(
                   margin: const EdgeInsets.only(right: 10.0),
-                  child: Icon(Icons.layers),
+                  child: const Icon(Icons.layers),
                 ),
               ],
             )
           ),
           Container(
-            margin: EdgeInsets.only(right: 10.0),
+            margin: const EdgeInsets.only(right: 10.0),
             child: GestureDetector(
               onTap: () async {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => new SummarySearchPage(
+                Navigator.push(context, MaterialPageRoute(builder: (context) => SummarySearchPage(
 
                 )));
               },
-              child: Icon(Icons.search, color: Colors.white,),
+              child: const Icon(Icons.search, color: Colors.white,),
             ),
           )
         ],
       ),
-      body: _loading ? Center(child: CircularProgressIndicator()) :
+      body: _loading ? const Center(child: CircularProgressIndicator()) :
       ModalProgressHUD(
+        inAsyncCall: _loading,
         child: Column(
             children: [
-              Container(
+              SizedBox(
                 height: isSearch ? 200.0 : 0.0,
                 child: Visibility(
                   visible: isSearch,
                   child: Scrollbar(
-                    isAlwaysShown: true,
+                    thumbVisibility: true,
                     thickness: 8.0,
                     controller: _scrollCtrl,
                     child: ListView(
@@ -254,117 +258,112 @@ class _SummaryPageState extends State<SummaryPage> {
                       children: [
                         Container(
                           padding: const EdgeInsets.only(left: 10.0),
-                          child: Text("Filter hanya untuk Summary Data", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),)
+                          child: const Text("Filter hanya untuk Summary Data", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),)
                         ),
 
                         Container(
                           padding: const EdgeInsets.only(left: 10.0),
-                          child: Text("Region")
+                          child: const Text("Region")
                         ),
-                        Container(
-                          child: ListTile(
-                            title: DropdownButton(
-                              isExpanded: true,
-                              hint: Row(
-                                children: <Widget>[
-                                  Text('Pilih Region'),
-                                ],
-                              ),
-                              items: _segmentRegion.map((item) {
-                                return DropdownMenuItem(
-                                  value: item.toString(),
-                                  child: FittedBox(
-                                      fit: BoxFit.contain,
-                                      child: Text(item, style: TextStyle(fontSize: 13.0, color: Colors.black),)
-                                  )
-                                );
-                              }).toList(),
-                              onChanged: (newVal) {
-                                _listSegment(_selectedStatus, _selectedSubStatus, newVal);
-                                setState(() {
-                                  _selectedRegion = newVal;
-                                  _selectedSegment = null;
-                                });
-                              },
-                              value: _selectedRegion,
-                              underline: Container(color:Colors.black, height:0.5),
+                        ListTile(
+                          title: DropdownButton(
+                            isExpanded: true,
+                            hint: const Row(
+                              children: <Widget>[
+                                Text('Pilih Region'),
+                              ],
                             ),
+                            items: _segmentRegion.map((item) {
+                              return DropdownMenuItem(
+                                value: item.toString(),
+                                child: FittedBox(
+                                    fit: BoxFit.contain,
+                                    child: Text(item, style: const TextStyle(fontSize: 13.0, color: Colors.black),)
+                                )
+                              );
+                            }).toList(),
+                            onChanged: (newVal) {
+                              _listSegment(_selectedStatus!, _selectedSubStatus!, newVal!);
+                              setState(() {
+                                _selectedRegion = newVal;
+                                _selectedSegment = null;
+                              });
+                            },
+                            value: _selectedRegion,
+                            underline: Container(color:Colors.black, height:0.5),
                           ),
                         ),
                         Container(
                           padding: const EdgeInsets.only(left: 10.0),
-                          child: Text("Ruas")
+                          child: const Text("Ruas")
                         ),
-                        Container(
-                          child: ListTile(
-                            title: SearchChoices.single(
-                              items: _segment.map((item) {
-                                return DropdownMenuItem(
-                                  value: item,
-                                  child: FittedBox(
-                                      fit: BoxFit.contain,
-                                      child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                                  )
-                                );
-                              }).toList(),
-                              selectedValueWidgetFn: (item) {
-                                return Container(
-                                  transform: Matrix4.translationValues(-10,0,0),
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                                );
-                              },
-                              hint: Container(
+                        ListTile(
+                          title: SearchChoices.single(
+                            items: _segment.map((item) {
+                              return DropdownMenuItem(
+                                value: item,
+                                child: FittedBox(
+                                    fit: BoxFit.contain,
+                                    child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
+                                )
+                              );
+                            }).toList(),
+                            selectedValueWidgetFn: (item) {
+                              return Container(
                                 transform: Matrix4.translationValues(-10,0,0),
-                                child: Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
-                              ),
-                              searchHint: "Pilih Ruas",
-                              onChanged: (newVal) {
-                                setState(() {
-                                  _selectedSegment = newVal;
-                                });
-                              },
-                              value: _selectedSegment,
-                              isExpanded: true,
-                              displayClearIcon: false,
-                              underline: Container(color:Colors.black, height:0.5),
-                              icon: Container(
-                                transform: Matrix4.translationValues(10,0,0),
-                                child: Icon(Icons.arrow_drop_down)
-                              ),
+                                alignment: Alignment.centerLeft,
+                                child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
+                              );
+                            },
+                            hint: Container(
+                              transform: Matrix4.translationValues(-10,0,0),
+                              child: const Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
+                            ),
+                            searchHint: "Pilih Ruas",
+                            onChanged: (newVal) {
+                              setState(() {
+                                _selectedSegment = newVal;
+                              });
+                            },
+                            value: _selectedSegment,
+                            isExpanded: true,
+                            displayClearIcon: false,
+                            underline: Container(color:Colors.black, height:0.5),
+                            icon: Container(
+                              transform: Matrix4.translationValues(10,0,0),
+                              child: const Icon(Icons.arrow_drop_down)
                             ),
                           ),
                         ),
-                        Container(
-                          // width: MediaQuery.of(context).size.width * 0.8,
-                          child: RaisedButton(
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
                             elevation: 0.8,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5),
                             ),
-                            onPressed: () {
-                              // _submit();
-                              setState(() {
-                                isSearch = false;
-                                _loading = true;
-
-                                _dataSummary['user_registered'] = 0;
-                                _dataSummary['problem_reported'] = 0;
-                                _dataSummary['activity_reported'] = 0;
-                                _dataSummary['attendance_total'] = 0;
-
-                                for (var i = 0; i < _totalUserPerCategory.length; i++) {
-                                  _totalUserPerCategory[i]["total"] = 0;
-                                }
-
-                                _getData(isOnlySummary: true);
-                                _loading = false;
-                              });
-                            },
-                            padding: EdgeInsets.all(12),
-                            color: colorPrimary,
-                            child: Text('SUBMIT', style: TextStyle(color: Colors.white)),
+                            padding: const EdgeInsets.all(12),
+                            backgroundColor: colorPrimary,
                           ),
+                          onPressed: () {
+                            // _submit();
+                            setState(() {
+                              isSearch = false;
+                              _loading = true;
+
+                              _dataSummary['user_registered'] = 0;
+                              _dataSummary['problem_reported'] = 0;
+                              _dataSummary['activity_reported'] = 0;
+                              _dataSummary['attendance_total'] = 0;
+
+                              for (var i = 0; i < _totalUserPerCategory.length; i++) {
+                                _totalUserPerCategory[i]["total"] = 0;
+                              }
+
+                              _getData(isOnlySummary: true);
+                              _loading = false;
+                            });
+                          },
+                          child: const Text('SUBMIT', style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),
@@ -375,23 +374,24 @@ class _SummaryPageState extends State<SummaryPage> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.all(10.0),
+                      const Padding(
+                        padding: EdgeInsets.all(10.0),
                         child: Text("Summary Data", style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),),
                       ),
                       widget.dateFrom != null && widget.dateFrom != "" ?
                       Padding(
                         padding: const EdgeInsets.all(2.0),
-                        child: Text(DateFormat("dd-MM-yyyy").format(DateTime.parse(widget.dateFrom))+" s/d "+DateFormat("dd-MM-yyyy").format(DateTime.parse(widget.dateTo)), style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold),),
+                        child: Text("${DateFormat("dd-MM-yyyy").format(DateTime.parse(widget.dateFrom))} s/d ${DateFormat("dd-MM-yyyy").format(DateTime.parse(widget.dateTo))}", style: const TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold),),
                       )
                       : Container(),
                       Padding(
                         padding: const EdgeInsets.only(left: 10.0, right: 10.0),
-                        child: Text((_selectedSegment == null ? "" : _selectedSegment), style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),),
+                        child: Text((_selectedSegment ?? ""), style: const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),),
+                      //child: Text((_selectedSegment == null ?? "" : _selectedSegment), style: const TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),),
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => new UserPage(
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => UserPage(
                             segment: _selectedSegment,
                             region: _selectedRegion,
                             dateFrom: widget.dateFrom,
@@ -399,6 +399,7 @@ class _SummaryPageState extends State<SummaryPage> {
                           )));
                         },
                         child: Card(
+                          margin: const EdgeInsets.only(left: 20.0, right: 20.0, top: 5.0),
                           child: Container(
                             // height: 300,
                             width: double.infinity,
@@ -410,22 +411,21 @@ class _SummaryPageState extends State<SummaryPage> {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 5.0),
-                                  child: Text("${_dataSummary['user_registered']}", style: TextStyle(fontSize: 35.0, fontWeight: FontWeight.bold, color: Colors.white),),
+                                  child: Text("${_dataSummary['user_registered']}", style: const TextStyle(fontSize: 35.0, fontWeight: FontWeight.bold, color: Colors.white),),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 10.0),
+                                const Padding(
+                                  padding: EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 10.0),
                                   child: Text('Total User Terdaftar', style: TextStyle(color: Colors.white),),
                                 ),
                               ],
                             )
                           ),
-                          margin: EdgeInsets.only(left: 20.0, right: 20.0, top: 5.0),
                         ),
                       ),
 
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => new ProblemListPage(
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => ProblemListPage(
                             segment: _selectedSegment,
                             region: _selectedRegion,
                             dateFrom: widget.dateFrom,
@@ -433,6 +433,7 @@ class _SummaryPageState extends State<SummaryPage> {
                           )));
                         },
                         child: Card(
+                          margin: const EdgeInsets.only(left: 20.0, right: 20.0, top: 5.0),
                           child: Container(
                             width: double.infinity,
                             decoration: BoxDecoration(
@@ -443,22 +444,21 @@ class _SummaryPageState extends State<SummaryPage> {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 5.0),
-                                  child: Text("${_dataSummary['problem_reported']}", style: TextStyle(fontSize: 35.0, fontWeight: FontWeight.bold, color: Colors.white),),
+                                  child: Text("${_dataSummary['problem_reported']}", style: const TextStyle(fontSize: 35.0, fontWeight: FontWeight.bold, color: Colors.white),),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 10.0),
+                                const Padding(
+                                  padding: EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 10.0),
                                   child: Text('Total Laporan Permasalahan', style: TextStyle(color: Colors.white)),
                                 ),
                               ],
                             )
                           ),
-                          margin: EdgeInsets.only(left: 20.0, right: 20.0, top: 5.0),
                         ),
                       ),
 
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => new ActivityPage(
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => ActivityPage(
                             segment: _selectedSegment,
                             region: _selectedRegion,
                             dateFrom: widget.dateFrom,
@@ -466,6 +466,7 @@ class _SummaryPageState extends State<SummaryPage> {
                           )));
                         },
                         child: Card(
+                          margin: const EdgeInsets.only(left: 20.0, right: 20.0, top: 5.0),
                           child: Container(
                             width: double.infinity,
                             decoration: BoxDecoration(
@@ -476,22 +477,21 @@ class _SummaryPageState extends State<SummaryPage> {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 5.0),
-                                  child: Text("${_dataSummary['activity_reported']}", style: TextStyle(fontSize: 35.0, fontWeight: FontWeight.bold, color: Colors.white),),
+                                  child: Text("${_dataSummary['activity_reported']}", style: const TextStyle(fontSize: 35.0, fontWeight: FontWeight.bold, color: Colors.white),),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 10.0),
+                                const Padding(
+                                  padding: EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 10.0),
                                   child: Text('Total Laporan Aktifitas', style: TextStyle(color: Colors.white)),
                                 ),
                               ],
                             )
                           ),
-                          margin: EdgeInsets.only(left: 20.0, right: 20.0, top: 5.0),
                         ),
                       ),
 
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => new AttendanceListPage(
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => AttendanceListPage(
                             segment: _selectedSegment,
                             region: _selectedRegion,
                             dateFrom: widget.dateFrom,
@@ -499,6 +499,7 @@ class _SummaryPageState extends State<SummaryPage> {
                           )));
                         },
                         child: Card(
+                          margin: const EdgeInsets.only(left: 20.0, right: 20.0, top: 5.0),
                           child: Container(
                             // height: 300,
                             width: double.infinity,
@@ -510,29 +511,28 @@ class _SummaryPageState extends State<SummaryPage> {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 5.0),
-                                  child: Text("${_dataSummary['attendance_total']}", style: TextStyle(fontSize: 35.0, fontWeight: FontWeight.bold, color: Colors.white),),
+                                  child: Text("${_dataSummary['attendance_total']}", style: const TextStyle(fontSize: 35.0, fontWeight: FontWeight.bold, color: Colors.white),),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 10.0),
+                                const Padding(
+                                  padding: EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 10.0),
                                   child: Text('Total Absensi', style: TextStyle(color: Colors.white)),
                                 ),
                               ],
                             )
                           ),
-                          margin: EdgeInsets.only(left: 20.0, right: 20.0, top: 5.0),
                         )
                       ),
 
-                      Padding(
-                        padding: const EdgeInsets.all(10.0),
+                      const Padding(
+                        padding: EdgeInsets.all(10.0),
                         child: Text("Summary Jumlah User Per Kategori User", style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
                       ),
 
-                      for (var i = 0; i < _totalUserPerCategory.length; i++) 
+                      for (var i = 0; i < _totalUserPerCategory.length; i++)
                         _selectedSegment != "" && _totalUserPerCategory[i]['total'] > 0 ?
                         GestureDetector(
                           onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => new UserPage(
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => UserPage(
                               segment: _selectedSegment,
                               region: _selectedRegion,
                               dateFrom: widget.dateFrom,
@@ -541,6 +541,7 @@ class _SummaryPageState extends State<SummaryPage> {
                             )));
                           },
                           child: Card(
+                            margin: const EdgeInsets.only(left: 20.0, right: 20.0, top: 5.0),
                             child: Container(
                               // height: 300,
                               width: double.infinity,
@@ -552,27 +553,26 @@ class _SummaryPageState extends State<SummaryPage> {
                                 children: [
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 5.0),
-                                    child: Text("${_totalUserPerCategory[i]['total']}", style: TextStyle(fontSize: 35.0, fontWeight: FontWeight.bold, color: Colors.white),),
+                                    child: Text("${_totalUserPerCategory[i]['total']}", style: const TextStyle(fontSize: 35.0, fontWeight: FontWeight.bold, color: Colors.white),),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 10.0),
-                                    child: Text("${_totalUserPerCategory[i]['company_field']}", style: TextStyle(color: Colors.white)),
+                                    child: Text("${_totalUserPerCategory[i]['company_field']}", style: const TextStyle(color: Colors.white)),
                                   ),
                                 ],
                               )
                             ),
-                            margin: EdgeInsets.only(left: 20.0, right: 20.0, top: 5.0),
                           ),
                         )
                         :
                         Container(),
-                        Padding(
-                          padding: const EdgeInsets.all(10.0),
+                        const Padding(
+                          padding: EdgeInsets.all(10.0),
                           child: Text("Grafik Aktifitas", style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
                         ),
                         barChart("activity"),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10.0, left: 10.0),
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 10.0, left: 10.0),
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Column(
@@ -586,13 +586,13 @@ class _SummaryPageState extends State<SummaryPage> {
                             ),
                           )
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(10.0),
+                        const Padding(
+                          padding: EdgeInsets.all(10.0),
                           child: Text("Grafik Permasalahan", style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
                         ),
                         barChart("problem"),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10.0, left: 10.0),
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 10.0, left: 10.0),
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Column(
@@ -606,13 +606,13 @@ class _SummaryPageState extends State<SummaryPage> {
                             ),
                           )
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(10.0),
+                        const Padding(
+                          padding: EdgeInsets.all(10.0),
                           child: Text("Grafik Absensi", style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
                         ),
                         barChart("attendance"),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10.0, left: 10.0),
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 10.0, left: 10.0),
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Column(
@@ -626,13 +626,13 @@ class _SummaryPageState extends State<SummaryPage> {
                             ),
                           )
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(10.0),
+                        const Padding(
+                          padding: EdgeInsets.all(10.0),
                           child: Text("Grafik Jumlah User PMI Per Segment", style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold)),
                         ),
                         barChart("total_user_per_segment"),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10.0, left: 10.0),
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 10.0, left: 10.0),
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Column(
@@ -652,7 +652,6 @@ class _SummaryPageState extends State<SummaryPage> {
               )
             ],
           ),
-        inAsyncCall: _loading,
       )
     );
   }
@@ -688,7 +687,7 @@ class _SummaryPageState extends State<SummaryPage> {
     }
     
     return Card(
-      margin: EdgeInsets.only(left: 20.0, right: 20.0, top: 5.0, bottom: 10.0),
+      margin: const EdgeInsets.only(left: 20.0, right: 20.0, top: 5.0, bottom: 10.0),
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       color: const Color(0xff2c4260),
@@ -717,7 +716,7 @@ class _SummaryPageState extends State<SummaryPage> {
                   return BarTooltipItem(
                     // rod.y.round().toString(),
                     data[groupIndex]["segment"]+"\n${data[groupIndex]["total"]}",
-                    TextStyle(
+                    const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
@@ -727,15 +726,19 @@ class _SummaryPageState extends State<SummaryPage> {
             ),
             titlesData: FlTitlesData(
               show: true,
-              bottomTitles: SideTitles(
-                showTitles: false
+              bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: false)
               ),
-              leftTitles: SideTitles(
-                showTitles: true,
-                getTextStyles: (value) =>
-              const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
-                margin: 10,
-                interval: interval
+              leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, _) => Text(
+                        value.toString(),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                      ),
+                      interval: interval
+                  ),
+
               )
             ),
             borderData: FlBorderData(
@@ -747,8 +750,9 @@ class _SummaryPageState extends State<SummaryPage> {
                   x: i,
                   barRods: [
                     BarChartRodData(
-                      y: data[i]['total'].toDouble(), 
-                      colors: [Colors.lightBlueAccent, Colors.greenAccent],
+                      fromY: data[i]['total'].toDouble(),
+                      toY: 0,
+                      color: Colors.lightBlueAccent,
                       width: 15
                     )
                   ],

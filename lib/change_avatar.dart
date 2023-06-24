@@ -1,14 +1,16 @@
 import 'dart:io';
 
-import 'package:bpjtteknik/utils/utils.dart';
-import 'package:bpjtteknik/helper/main_helper.dart' as helper;
-import 'package:bpjtteknik/view/dashboard/dashboard_page.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/utils.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/main_helper.dart' as helper;
+import 'package:bpjt_k_gis_mobile_master/view/dashboard/dashboard_page.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+// import 'package:modal_progress_hud/modal_progress_hud.dart';
+// import 'package:package_info/package_info.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 
 import 'conn/API.dart';
 
@@ -31,12 +33,12 @@ class _ChangeAvatarPageState extends State<ChangeAvatarPage> {
 
   var userDetail;
 
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  String? appName;
+  String? packageName;
+  String? version;
+  String? buildNumber;
 
-  String _imagePath;
+  String? _imagePath;
   final ImagePicker picker = ImagePicker();
   
   _getInfo() async {
@@ -50,7 +52,7 @@ class _ChangeAvatarPageState extends State<ChangeAvatarPage> {
   }
 
   _userDetail() async {
-    await API.getUserByEmail(prefEmail, version).then((response) {
+    await API.getUserByEmail(prefEmail, version!).then((response) {
       if (!mounted) return;
       helper.showUpdateAppsModal(context, response);
       setState(() {
@@ -60,7 +62,7 @@ class _ChangeAvatarPageState extends State<ChangeAvatarPage> {
   }
   
   void _pickImage() async {
-    PickedFile file;
+    PickedFile? file;
     
     showDialog(
       context: context,
@@ -73,7 +75,7 @@ class _ChangeAvatarPageState extends State<ChangeAvatarPage> {
                 Navigator.pop(context); //close the dialog box
                 file = await picker.getImage(source: ImageSource.gallery);
                 setState(() {
-                  _imagePath = file.path;
+                  _imagePath = file?.path;
                 });
               },
               child: const Text('Gallery'),
@@ -83,7 +85,7 @@ class _ChangeAvatarPageState extends State<ChangeAvatarPage> {
                 Navigator.pop(context); //close the dialog box
                 file = await picker.getImage(source: ImageSource.camera);
                 setState(() {
-                  _imagePath = file.path;
+                  _imagePath = file?.path;
                 });
               },
               child: const Text('Kamera'),
@@ -118,8 +120,8 @@ class _ChangeAvatarPageState extends State<ChangeAvatarPage> {
 
     await API.storeAvatar(
       params,
-      _imagePath,
-      version
+      _imagePath ?? 'path kosong',
+      version ?? 'versi kosong',
     ).then((response) {
       if (response["status"] == "success") {
         _showDialog(context, response["message"], "Sukses!");
@@ -140,7 +142,7 @@ class _ChangeAvatarPageState extends State<ChangeAvatarPage> {
         title: Text(title),
         content: Text(msg),
         actions: <Widget>[
-          FlatButton(
+          TextButton (
             child: Text("Ok"),
             onPressed: () async {
               Navigator.pop(context);
@@ -175,11 +177,12 @@ class _ChangeAvatarPageState extends State<ChangeAvatarPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Ubah Foto Profil'),
+        title: const Text('Ubah Foto Profil'),
         backgroundColor: colorPrimary,
       ),
-      body: prefId == "" || prefId == null ? Center(child: CircularProgressIndicator()) :
-        ModalProgressHUD(
+      body: prefId == "" || prefId == null ? const Center(child: CircularProgressIndicator()) :
+      ModalProgressHUD(
+          inAsyncCall: _loading,
           child: Container(
             alignment: Alignment.topCenter,
             child: SingleChildScrollView(
@@ -188,23 +191,24 @@ class _ChangeAvatarPageState extends State<ChangeAvatarPage> {
                   SizedBox(
                     height: heightSize * 0.01,
                   ),
-                  displaySelectedFile(_imagePath),
+                  displaySelectedFile(_imagePath!),
                   SizedBox(
                     height: heightSize * 0.01,
                   ),
-                  Container(
-                      child: RaisedButton(
-                        elevation: 0.8,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        onPressed: () {
-                          _changeAvatars();
-                        },
-                        padding: EdgeInsets.all(12),
-                        color: colorPrimary,
-                        child: Text('SUBMIT', style: TextStyle(color: Colors.white)),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0.8,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5),
                       ),
+
+                      padding: EdgeInsets.all(12),
+                      backgroundColor: colorPrimary,
+                    ),
+                    onPressed: () {
+                      _changeAvatars();
+                    },
+                    child: Text('SUBMIT', style: TextStyle(color: Colors.white)),
                   ),
                   SizedBox(
                     height: heightSize * 0.05,
@@ -213,7 +217,6 @@ class _ChangeAvatarPageState extends State<ChangeAvatarPage> {
               )
             )
           ),
-          inAsyncCall: _loading,
         ),
     );
   }
@@ -225,8 +228,8 @@ class _ChangeAvatarPageState extends State<ChangeAvatarPage> {
       if (userDetail["filepath"] != null && userDetail["filename"] != null) {
         file = NetworkImage("http://103.6.53.254:13480/bpjt-teknik/public"+userDetail["filepath"]+"/"+userDetail["filename"]);
       } else {
-        userDetail = null;
-        filePath = null;
+        userDetail = 'user detail kososng';
+        filePath = 'file path kosong';
       }
     } else {
       if (filePath == null) {
@@ -245,7 +248,7 @@ class _ChangeAvatarPageState extends State<ChangeAvatarPage> {
             image: DecorationImage(
               fit: BoxFit.cover, 
               image: filePath == null && userDetail == null
-                ? AssetImage('assets/images/person_6x8.png')
+                ? const AssetImage('assets/images/person_6x8.png')
                 : file
             ),
             borderRadius: BorderRadius.all(Radius.circular(8.0)),

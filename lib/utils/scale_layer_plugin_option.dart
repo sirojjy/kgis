@@ -1,47 +1,45 @@
 import 'dart:math';
 import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/plugin_api.dart';
-
 import './scalebar_utils.dart' as util;
 
-class ScaleLayerPluginOption extends LayerOptions {
-  TextStyle textStyle;
-  Color lineColor;
-  double lineWidth;
+///LayerOptions -> MapOption
+class ScaleLayerPluginOption extends MapOptions {
+  final TextStyle textStyle;
+  final Color lineColor;
+  final double lineWidth;
   final EdgeInsets padding;
 
   ScaleLayerPluginOption({
-    Key key,
-    this.textStyle,
+    required Key key,
+    required this.textStyle,
     this.lineColor = Colors.white,
     this.lineWidth = 2,
-    this.padding,
+    required this.padding,
     rebuild,
-  }) : super(key: key, rebuild: rebuild);
+  });
 }
-
-class ScaleLayerPlugin implements MapPlugin {
-  @override
+///MapPluginLayer -> MapOptions
+class ScaleLayerPlugin extends MapOptions  {
   Widget createLayer(
-      LayerOptions options, MapState mapState, Stream<Null> stream) {
+      ///MapState mapState ->  mapState
+      MapOptions options, mapState, Stream<Null> stream) {
     if (options is ScaleLayerPluginOption) {
       return ScaleLayer(options, mapState, stream);
     }
     throw Exception('Unknown options type for ScaleLayerPlugin: $options');
   }
 
-  @override
-  bool supportsLayer(LayerOptions options) {
+  bool supportsLayer(MapOptions options) {
     return options is ScaleLayerPluginOption;
   }
 }
 
 class ScaleLayer extends StatelessWidget {
   final ScaleLayerPluginOption scaleLayerOpts;
-  final MapState map;
+  final FlutterMapState map;
   final Stream<Null> stream;
   final scale = [
     25000000,
@@ -69,8 +67,8 @@ class ScaleLayer extends StatelessWidget {
     5
   ];
 
-  ScaleLayer(this.scaleLayerOpts, this.map, this.stream)
-      : super(key: scaleLayerOpts.key);
+  ScaleLayer(this.scaleLayerOpts, this.map, this.stream);
+      // : super(key: scaleLayerOpts.key);
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +82,7 @@ class ScaleLayer extends StatelessWidget {
     var displayDistance = distance > 999
         ? '${(distance / 1000).toStringAsFixed(0)} km'
         : '${distance.toStringAsFixed(0)} m';
-    double width = (end.x - start.x);
+    double width = (end.x - start.x).toDouble();
 
     return CustomPaint(
       painter: ScalePainter(
@@ -101,7 +99,7 @@ class ScaleLayer extends StatelessWidget {
 
 class ScalePainter extends CustomPainter {
   ScalePainter(this.width, this.text,
-      {this.padding, this.textStyle, this.lineWidth, this.lineColor});
+      {required this.padding, required this.textStyle, required this.lineWidth, required this.lineColor});
   final double width;
   final EdgeInsets padding;
   final String text;
@@ -116,15 +114,15 @@ class ScalePainter extends CustomPainter {
       ..strokeCap = StrokeCap.square
       ..strokeWidth = lineWidth;
 
-    var sizeForStartEnd = 4;
-    var paddingLeft = padding == null ? 0 : padding.left + sizeForStartEnd / 2;
-    var paddingTop = padding == null ? 0 : padding.top;
+    double sizeForStartEnd = 4;
+    double paddingLeft = padding == null ? 0 : padding.left + sizeForStartEnd / 2;
+    double paddingTop = padding == null ? 0 : padding.top;
 
     var textSpan = TextSpan(style: textStyle, text: text);
     var textPainter =
         TextPainter(text: textSpan, textDirection: TextDirection.ltr)..layout();
     textPainter.paint(canvas,
-        Offset(width / 2 - textPainter.width / 2 + paddingLeft, paddingTop));
+        Offset(width / 2 - textPainter.width / 2 + paddingLeft, paddingTop.toDouble()));
     paddingTop += textPainter.height;
     var p1 = Offset(paddingLeft, sizeForStartEnd + paddingTop);
     var p2 = Offset(paddingLeft + width, sizeForStartEnd + paddingTop);

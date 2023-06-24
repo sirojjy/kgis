@@ -1,4 +1,4 @@
-package com.example.bpjt_k_gis_mobile_master
+package com.bpjt_k_gis
 
 import io.flutter.embedding.android.FlutterActivity
 

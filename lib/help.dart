@@ -1,6 +1,8 @@
-import 'package:bpjtteknik/utils/utils.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/utils.dart';
+import 'package:easy_pdf_viewer/easy_pdf_viewer.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_plugin_pdf_viewer/flutter_plugin_pdf_viewer.dart';
+// import 'package:pdf_viewer_plugin/pdf_viewer_plugin.dart';
+// import 'package:flutter_plugin_pdf_viewer/flutter_plugin_pdf_viewer.dart';
 
 class HelpPage extends StatefulWidget {
   final url;
@@ -15,7 +17,7 @@ class HelpPage extends StatefulWidget {
 
 class _HelpPageState extends State<HelpPage> {
   bool _isLoading = true;
-  PDFDocument document;
+  late PDFDocument document;
 
   @override
   void initState() {

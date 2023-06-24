@@ -12,7 +12,7 @@ class DbSegments {
 
   Future<Map<String, dynamic>> getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    Map<String, dynamic> ret = Map<String, dynamic>();
+    Map<String, dynamic> ret = <String, dynamic>{};
 
     ret['app_name'] = packageInfo.appName;
     ret['package_name'] = packageInfo.packageName;
@@ -23,25 +23,21 @@ class DbSegments {
   }
   
   factory DbSegments() {
-    if (_dbSegments == null) {
-      _dbSegments = DbSegments._createObject();
-    }
+    _dbSegments ??= DbSegments._createObject();
     return _dbSegments!;
   }
 
   Future<Database> get database async {
     var db = new Db();
-    if (_database == null) {
-      _database = await db.init();
-    }
+    _database ??= await db.init();
     return _database!;
   }
 
   Future<List<Map<String, dynamic>>> select() async {
-    Database db = await this.database;
+    Database db = await database;
     var mapList = await db.query('segments', orderBy: 'id');
 
-    if (mapList.length < 1) {
+    if (mapList.isEmpty) {
       Map<String, dynamic> version = await getInfo();
 
       await API.getSegment("", "", "", "true", version["version"]).then((response) {

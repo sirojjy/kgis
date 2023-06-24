@@ -1,9 +1,11 @@
-import 'package:bpjtteknik/utils/colors.dart';
+import 'package:art_sweetalert/art_sweetalert.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gallery_saver/gallery_saver.dart';
-import 'package:pinch_zoom_image_last/pinch_zoom_image_last.dart';
-import 'package:sweetalert/sweetalert.dart';
+import 'package:pinch_zoom/pinch_zoom.dart';
+// import 'package:pinch_zoom_image_last/pinch_zoom_image_last.dart';
+// import 'package:sweetalert/sweetalert.dart';
 
 class ImageDetail extends StatefulWidget {
   final imageWidget;
@@ -21,14 +23,14 @@ class ImageDetail extends StatefulWidget {
 class _ImageDetailState extends State<ImageDetail> {
   @override
   initState() {
-    SystemChrome.setEnabledSystemUIOverlays([]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
     super.initState();
   }
 
   @override
   void dispose() {
     //SystemChrome.restoreSystemUIOverlays();
-    SystemChrome.setEnabledSystemUIOverlays(SystemUiOverlay.values);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: SystemUiOverlay.values);
     super.dispose();
   }
 
@@ -36,7 +38,7 @@ class _ImageDetailState extends State<ImageDetail> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Perbesar Gambar'),
+        title: const Text('Perbesar Gambar'),
         backgroundColor: colorPrimary,
       ),
       body: Column(
@@ -46,16 +48,12 @@ class _ImageDetailState extends State<ImageDetail> {
               child: Center(
                 child: Hero(
                   tag: 'imageHero',
-                  child: PinchZoomImage(
-                    image: widget.imageWidget,
-                    zoomedBackgroundColor: Color.fromRGBO(240, 240, 240, 1.0),
-                    hideStatusBarWhileZooming: false,
-                    onZoomStart: () {
-                      print('Zoom started');
-                    },
-                    onZoomEnd: () {
-                      print('Zoom finished');
-                    },
+                  child: PinchZoom(
+                    // zoomedBackgroundColor: Color.fromRGBO(240, 240, 240, 1.0),
+                    // hideStatusBarWhileZooming: false,
+                    onZoomStart: () {print('Zoom started');},
+                    onZoomEnd: () {print('Zoom finished');},
+                    child: Image.network(widget.imageWidget),
                   ),
                 ),
               ),
@@ -65,18 +63,24 @@ class _ImageDetailState extends State<ImageDetail> {
             ),
           ),
           Container(
-            child: FlatButton(
-              color: Colors.teal,
-              child: new Text("Unduh Gambar", style: TextStyle(color: Colors.white),),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal,),
+              child: const Text("Unduh Gambar", style: TextStyle(color: Colors.white),),
               onPressed: () async {
-                GallerySaver.saveImage(widget.imageUrl).then((bool success) {
-                  SweetAlert.show(context,
-                    title: "Sukses",
-                    subtitle: "Berhasil Di unduh",
-                    style: SweetAlertStyle.success,
-                    onPress: (bool isConfirm) {
-                      return true;
-                    }
+                GallerySaver.saveImage(widget.imageUrl).then((bool? success) async{
+                  await ArtSweetAlert.show(
+                      context: context,
+                      artDialogArgs: ArtDialogArgs(
+                        type: ArtSweetAlertType.success,
+                        title: "Sukses",
+                        text: "Berhasil Di unduh",
+                      )
+                      // title: "Sukses",
+                      // subtitle: "Berhasil Di unduh",
+                      // style: SweetAlertStyle.success,
+                      // onPress: (bool isConfirm) {
+                      //   return true;
+                      // },
                   );
                 });
               },

@@ -12,7 +12,7 @@ import 'db_problems.dart';
 class Db {
   Future<Database> init() async {
     Directory directory = await getApplicationDocumentsDirectory();
-    String pathActivity = directory.path + '/bpjt_teknik.db';
+    String pathActivity = '${directory.path}/bpjt_teknik.db';
 
     var db = await openDatabase(pathActivity, version: 1, onCreate: _createDbSchema);
 
@@ -127,7 +127,7 @@ class Db {
 
   Future deleteDb() async {
     Directory directory = await getApplicationDocumentsDirectory();
-    String path = directory.path + '/bpjt_teknik.db';
+    String path = '${directory.path}/bpjt_teknik.db';
     
     try{
       deleteDatabase(path);

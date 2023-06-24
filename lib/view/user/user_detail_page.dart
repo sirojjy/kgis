@@ -1,6 +1,6 @@
-import 'package:bpjtteknik/utils/utils.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:bpjtteknik/helper/main_helper.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/main_helper.dart';
 
 class UserDetailPage extends StatefulWidget {
   final id;

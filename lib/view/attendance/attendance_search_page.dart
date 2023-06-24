@@ -1,11 +1,12 @@
 import 'dart:convert';
 
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/utils/colors.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:intl/intl.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+// import 'package:package_info/package_info.dart';
 import 'package:search_choices/search_choices.dart';
 // import 'package:searchable_dropdown/searchable_dropdown.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,13 +19,13 @@ class AttendanceSearchPage extends StatefulWidget {
 }
 
 class AttendanceSearchPageState extends State<AttendanceSearchPage> {
-  String _dateFrom;
-  String _dateTo;
-  String _selectedSegment;
-  String _selectedPosition;
+  late String _dateFrom;
+  late String _dateTo;
+  late String _selectedSegment;
+  late String _selectedPosition;
 
-  List _segments = List();
-  List prefSegments = List();
+  List _segments = [];
+  List prefSegments = [];
 
   var prefId;
   var prefName;
@@ -49,10 +50,10 @@ class AttendanceSearchPageState extends State<AttendanceSearchPage> {
     "Ahli Struktur"
   ];
   
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -74,8 +75,8 @@ class AttendanceSearchPageState extends State<AttendanceSearchPage> {
     prefEmail = prefs.getString('email');
     prefRoleId = prefs.getString('role_id');
     prefIsApprove = prefs.getBool('is_approve');
-    prefSegment = prefs.getString('segment');
-    prefSegments = jsonDecode(prefs.getString('segments'));
+    String? segmentsString = prefs.getString('segments');
+    prefSegments = segmentsString != null ? jsonDecode(segmentsString) : null;
   }
   
   _listSegment() async {
@@ -163,7 +164,7 @@ class AttendanceSearchPageState extends State<AttendanceSearchPage> {
                   onChanged: (value) {
                     setState(() {
                       if (value == null) {
-                        _selectedSegment = null;
+                        _selectedSegment = '';
                       } else {
                         _selectedSegment = value;
                       }
@@ -207,7 +208,7 @@ class AttendanceSearchPageState extends State<AttendanceSearchPage> {
                   onChanged: (value) {
                     setState(() {
                       if (value == null) {
-                        _selectedPosition = null;
+                        _selectedPosition = '';
                       } else {
                         _selectedPosition = value;
                       }
@@ -227,7 +228,7 @@ class AttendanceSearchPageState extends State<AttendanceSearchPage> {
             Container(
               margin: const EdgeInsets.only(left: 15.0, right: 15.0, top: 5.0),
               child: FormBuilderDateTimePicker(
-                attribute: 'date',
+                name: 'date',
                 onChanged: (val) => {
                   setState(() {
                     _dateFrom = val.toString().split(' ')[0];
@@ -244,7 +245,7 @@ class AttendanceSearchPageState extends State<AttendanceSearchPage> {
             Container(
               margin: const EdgeInsets.only(left: 15.0, right: 15.0, top: 5.0),
               child: FormBuilderDateTimePicker(
-                attribute: 'date',
+                name: 'date',
                 onChanged: (val) => {
                   setState(() {
                     _dateTo = val.toString().split(' ')[0];
@@ -258,7 +259,8 @@ class AttendanceSearchPageState extends State<AttendanceSearchPage> {
                 format: DateFormat('yyyy-MM-dd'),
               ),
             ),
-            FlatButton(
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: colorPrimary,),
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => new AttendanceListPage(
                   segment: _selectedSegment,
@@ -268,7 +270,6 @@ class AttendanceSearchPageState extends State<AttendanceSearchPage> {
                   name: _nameController.text,
                 )));
               },
-              color: colorPrimary,
               child: Text("Cari", style: TextStyle(color: Colors.white)),
             ),
           ],

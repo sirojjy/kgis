@@ -1,12 +1,15 @@
 import 'dart:convert';
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/utils/colors.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:package_info/package_info.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sweetalert/sweetalert.dart';
+// import 'package:sweetalert/sweetalert.dart';
+// import 'package:modal_progress_hud/modal_progress_hud.dart';
+// import 'package:package_info/package_info.dart';
 
 class NoPositionPage extends StatefulWidget {
   @override
@@ -16,7 +19,7 @@ class NoPositionPage extends StatefulWidget {
 class _NoPositionPageState extends State<NoPositionPage> {
   bool _loading = false;
 
-  String _selectedCompanyField;
+  String? _selectedCompanyField;
 
   var prefId;
   var prefName;
@@ -26,16 +29,16 @@ class _NoPositionPageState extends State<NoPositionPage> {
   var prefEmail;
   var prefRoleId;
   var prefIsApprove;
-  List prefSegments = List();
+  List prefSegments = [];
   var prefMapType;
   var prefPosition;
 
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
 
-  List _positions = List();
+  List _positions = [];
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -57,11 +60,11 @@ class _NoPositionPageState extends State<NoPositionPage> {
     prefEmail = prefs.getString('email');
     prefRoleId = prefs.getString('role_id');
     prefIsApprove = prefs.getBool('is_approve');
-    prefSegments = jsonDecode(prefs.getString('segments'));
+    prefSegments = jsonDecode(prefs.getString('segments')!);
     prefMapType = prefs.getString('map_type');
     prefPosition = prefs.getString('position');
   }
-  
+
   void _submit() async {
     setState(() {
       _loading = true;
@@ -77,30 +80,48 @@ class _NoPositionPageState extends State<NoPositionPage> {
     ).then((response) async {
       if (response["status"] == "success") {
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setString('position', _selectedCompanyField);
-        SweetAlert.show(context,
+        prefs.setString('position', _selectedCompanyField!);
+        Alert(
+          context: context,
+          type: AlertType.success,
           title: "Sukses",
-          subtitle: response["message"],
-          style: SweetAlertStyle.success,
-          onPress: (bool isConfirm) {
-            if (isConfirm) {
-              Phoenix.rebirth(context);
-            }
-            return;
-          }
-        );
+          desc: response["message"],
+          buttons: [
+            DialogButton(child: const Text("OK "), onPressed: () {return;})
+          ]
+        ).show();
+        // SweetAlert.show(context,
+        //   title: "Sukses",
+        //   subtitle: response["message"],
+        //   style: SweetAlertStyle.success,
+        //   onPress: (bool isConfirm) {
+        //     if (isConfirm) {
+        //       Phoenix.rebirth(context);
+        //     }
+        //     return;
+        //   }
+        // );
       } else {
-        SweetAlert.show(context,
-          title: "Error",
-          subtitle: response["message"],
-          style: SweetAlertStyle.error,
-          onPress: (bool isConfirm) {
-            if (isConfirm) {
-              Navigator.of(context).pop(true);
-            }
-            return;
-          }
-        );
+        Alert(
+            context: context,
+            type: AlertType.error,
+            title: "Error",
+            desc: response["message"],
+            buttons: [
+              DialogButton(child: const Text("OK "), onPressed: () {return;})
+            ]
+        ).show();
+        // SweetAlert.show(context,
+        //   title: "Error",
+        //   subtitle: response["message"],
+        //   style: SweetAlertStyle.error,
+        //   onPress: (bool isConfirm) {
+        //     if (isConfirm) {
+        //       Navigator.of(context).pop(true);
+        //     }
+        //     return;
+        //   }
+        // );
       }
     });
   }
@@ -134,7 +155,7 @@ class _NoPositionPageState extends State<NoPositionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Lengkapi Data Anda'),
+        title: const Text('Lengkapi Data Anda'),
         backgroundColor: colorPrimary,
       ),
       body: ModalProgressHUD(
@@ -148,11 +169,11 @@ class _NoPositionPageState extends State<NoPositionPage> {
                 title: DropdownButton(
                   selectedItemBuilder: (BuildContext context) {
                     return _positions.map<Widget>((item) {
-                      return Text(item['position'], style: TextStyle(color: Colors.black),);
+                      return Text(item['position'], style: const TextStyle(color: Colors.black),);
                     }).toList();
                   },
                   isExpanded: true,
-                  hint: Row(
+                  hint: const Row(
                     children: <Widget>[
                       Text('Pilih Jabatan', style: TextStyle(color: Colors.black),),
                     ],
@@ -162,7 +183,7 @@ class _NoPositionPageState extends State<NoPositionPage> {
                       value: item['position'].toString(),
                       child: FittedBox(
                           fit: BoxFit.contain,
-                          child: Text(item['position'], style: TextStyle(fontSize: 13.0, color: Colors.black),)
+                          child: Text(item['position'], style: const TextStyle(fontSize: 13.0, color: Colors.black),)
                       )
                     );
                   }).toList(),
@@ -178,17 +199,19 @@ class _NoPositionPageState extends State<NoPositionPage> {
             ),
             Container(
               // width: MediaQuery.of(context).size.width * 0.8,
-              child: RaisedButton(
-                elevation: 0.8,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(5),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  elevation: 0.8,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  backgroundColor: colorPrimary,
                 ),
                 onPressed: () {
                   _submit();
                 },
-                padding: EdgeInsets.all(12),
-                color: colorPrimary,
-                child: Text('SUBMIT', style: TextStyle(color: Colors.white)),
+                child: const Text('SUBMIT', style: TextStyle(color: Colors.white)),
               ),
             ),
           ],

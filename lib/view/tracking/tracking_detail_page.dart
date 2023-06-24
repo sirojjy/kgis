@@ -1,22 +1,25 @@
 import 'dart:io';
 
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/image_detail.dart';
-import 'package:bpjtteknik/pdf_viewer.dart';
-import 'package:bpjtteknik/utils/utils.dart';
-import 'package:bpjtteknik/view/dashboard/dashboard_page.dart';
-import 'package:bpjtteknik/view/tracking/map_tracking_page.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/image_detail.dart';
+import 'package:bpjt_k_gis_mobile_master/pdf_viewer.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/utils.dart';
+import 'package:bpjt_k_gis_mobile_master/view/dashboard/dashboard_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/tracking/map_tracking_page.dart';
+import 'package:carousel_pro_nullsafety/carousel_pro_nullsafety.dart';
 import 'package:flutter/material.dart';
-import 'package:carousel_pro/carousel_pro.dart';
-import 'package:bpjtteknik/helper/main_helper.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/main_helper.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:intl/intl.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:sweetalert/sweetalert.dart';
 import 'package:url_launcher/url_launcher.dart';
+// import 'package:carousel_pro/carousel_pro.dart';
+// import 'package:package_info/package_info.dart';
+// import 'package:sweetalert/sweetalert.dart';
 
 class TrackingDetailPage extends StatefulWidget {
   final id;
@@ -78,15 +81,15 @@ class TrackingDetailPage extends StatefulWidget {
 class _TrackingDetailPageState extends State<TrackingDetailPage> {
   var onlyImageList = [];
   var pdfList = [];
-  List<String> imagePathList = List<String>();
-  List<String> imageDevicePathList = List<String>();
+  List<String> imagePathList = [];
+  List<String> imageDevicePathList = [];
 
-  TextEditingController _noteController = new TextEditingController();
+  TextEditingController _noteController = TextEditingController();
 
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -104,13 +107,13 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
         filepath = "storage/app/media/activities";
       }
       if (!(filename).contains(".pdf") && !(filename).contains(".doc") && !(filename).contains(".docx")) {
-        onlyImageList.add(Image.network("http://103.6.53.254:13480/bpjt-teknik/public"+filepath+"/"+filename));
-        imagePathList.add("http://103.6.53.254:13480/bpjt-teknik/public"+filepath+"/"+filename);
+        onlyImageList.add(Image.network("http://103.6.53.254:13480/bpjt-teknik/public$filepath/$filename"));
+        imagePathList.add("http://103.6.53.254:13480/bpjt-teknik/public$filepath/$filename");
         pdfList.add("");
       } else {
         onlyImageList.add(Image.asset("assets/images/pdf_placeholder.png"));
         imagePathList.add("");
-        pdfList.add("http://103.6.53.254:13480/bpjt-teknik/public"+filepath+"/"+filename);
+        pdfList.add("http://103.6.53.254:13480/bpjt-teknik/public$filepath/$filename");
       }
     // }
   }
@@ -141,7 +144,7 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
   }
 
   _saveNote() async {
-    Map<String, dynamic> params = Map<String, dynamic>();
+    Map<String, dynamic> params = <String, dynamic>{};
     params["id"] = widget.id;
     if (widget.companyField == 'BPJT') {
       params["note2"] = _noteController.text;
@@ -154,26 +157,54 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
     await API.storeTrackingProblem(params, "", version).then((response) {
       if (response["status"] != null) {
         if (response["status"] == "success") {
-          SweetAlert.show(context,
+          Alert(
+            context: context,
+            type: AlertType.success,
             title: "Sukses",
-            subtitle: response["message"],
-            style: SweetAlertStyle.success,
-            onPress: (bool isConfirm) {
-              if (isConfirm) {
-                Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => DashboardPage()), (Route<dynamic> route) => false);
-              }
-              return true;
-            }
-          );
+            desc: response["message"],
+            buttons: [
+              DialogButton(
+                  child: const Text("Ok"),
+                  onPressed: () {
+                    Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => DashboardPage()), (Route<dynamic> route) => false);
+                  }
+              )
+            ]
+          ).show();
+          // SweetAlert.show(context,
+          //   title: "Sukses",
+          //   subtitle: response["message"],
+          //   style: SweetAlertStyle.success,
+          //   onPress: (bool isConfirm) {
+          //     if (isConfirm) {
+          //       Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => DashboardPage()), (Route<dynamic> route) => false);
+          //     }
+          //     return true;
+          //   }
+          // );
         } else {
-          SweetAlert.show(context,
-            title: "Error",
-            subtitle: response["message"],
-            style: SweetAlertStyle.error,
-            onPress: (bool isConfirm) {
-              return true;
-            }
-          );
+          Alert(
+              context: context,
+              type: AlertType.error,
+              title: "Error",
+              desc: response["message"],
+              buttons: [
+                DialogButton(
+                    child: const Text("Ok"),
+                    onPressed: () {
+                      return;
+                    }
+                )
+              ]
+          ).show();
+          // SweetAlert.show(context,
+          //   title: "Error",
+          //   subtitle: response["message"],
+          //   style: SweetAlertStyle.error,
+          //   onPress: (bool isConfirm) {
+          //     return true;
+          //   }
+          // );
         }
       }
     });
@@ -183,7 +214,7 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Detail Tracking Permasalahan'),
+        title: const Text('Detail Tracking Permasalahan'),
         backgroundColor: colorPrimary,
       ),
       body: bodyDetail(context)
@@ -216,15 +247,15 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
         print("NOT PDF OR IMAGE");
       }
     }
-    
-    Widget imageCarousel = Container(
+    List<Widget> widgetImageList = onlyImageList.map((image) => Image.network(image)).toList();
+    Widget imageCarousel = SizedBox(
       height: MediaQuery.of(context).size.height * 0.35,
       child: Carousel(
         boxFit: BoxFit.cover,
-        images: onlyImageList,
+        images: widgetImageList,
         autoplay: true,
         animationCurve: Curves.fastOutSlowIn,
-        animationDuration: Duration(milliseconds: 1000),
+        animationDuration: const Duration(milliseconds: 1000),
         dotSize: 4.0,
         indicatorBgPadding: 2.0,
         dotBgColor: Colors.transparent,
@@ -239,64 +270,64 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
         Expanded(
           child: ListView(
             children: <Widget>[
-              Padding(
+              const Padding(
                 padding: EdgeInsets.only(top: 5.0),
               ),
               widget.filepath.isEmpty ? Image.asset("images/no_image_2.png", height: 200.0) : imageCarousel,
               Padding(
-                padding: EdgeInsets.all(5.0),
+                padding: const EdgeInsets.all(5.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(date(DateTime.parse(widget.date)), style: TextStyle(fontWeight: FontWeight.bold),)
+                    Text(date(DateTime.parse(widget.date)), style: const TextStyle(fontWeight: FontWeight.bold),)
                   ],
                 ),
               ),
               Padding(
-                padding: EdgeInsets.all(5.0),
+                padding: const EdgeInsets.all(5.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(widget.segment, style: TextStyle(fontWeight: FontWeight.bold),)
+                    Text(widget.segment, style: const TextStyle(fontWeight: FontWeight.bold),)
                   ],
                 ),
               ),
               Padding(
-                padding: EdgeInsets.all(5.0),
+                padding: const EdgeInsets.all(5.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Lokasi :', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Lokasi :', style: TextStyle(fontWeight: FontWeight.bold)),
                     Text(widget.location == null || widget.location == "" ? '-' : widget.location)
                   ],
                 ),
               ),
               Padding(
-                padding: EdgeInsets.all(5.0),
+                padding: const EdgeInsets.all(5.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Masalah yang dilaporkan :', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Masalah yang dilaporkan :', style: TextStyle(fontWeight: FontWeight.bold)),
                     Text(widget.problem == null || widget.problem == "" ? '-' : widget.problem)
                   ],
                 ),
               ),
               Padding(
-                padding: EdgeInsets.all(5.0),
+                padding: const EdgeInsets.all(5.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Lat :', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Text('Lat :', style: TextStyle(fontWeight: FontWeight.bold)),
                         Text(widget.lat == null || widget.lat == "" ? '-' : widget.lat)
                       ],
                     ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Long :', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Text('Long :', style: TextStyle(fontWeight: FontWeight.bold)),
                         Text(widget.long == null || widget.long == "" ? '-' : widget.long)
                       ],
                     ),
@@ -306,7 +337,7 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
                         Container(
                           margin: const EdgeInsets.only(right: 5.0),
                           child: SizedBox.fromSize(
-                            size: Size(40, 40), // button width and height
+                            size: const Size(40, 40), // button width and height
                             child: ClipOval(
                               child: Material(
                                 color: Colors.blue, // button color
@@ -314,17 +345,31 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
                                   splashColor: Colors.green, // splash color
                                   onTap: () {
                                     Clipboard.setData(ClipboardData(text: "${widget.lat}, ${widget.long}"));
-                                    SweetAlert.show(
-                                      context,
-                                      // title: "OK",
-                                      subtitle: "Koordinat Berhasil Disalin",
-                                      style: SweetAlertStyle.success,
-                                      onPress: (bool isConfirm) {
-                                        return true;
-                                      }
-                                    );
+                                    Alert(
+                                        context: context,
+                                        type: AlertType.none,
+                                        // title: "Error",
+                                        desc: "Koordinat Berhasil Disalin",
+                                        buttons: [
+                                          DialogButton(
+                                              child: const Text("Ok"),
+                                              onPressed: () {
+                                                return;
+                                              }
+                                          )
+                                        ]
+                                    ).show();
+                                    // SweetAlert.show(
+                                    //   context,
+                                    //   // title: "OK",
+                                    //   subtitle: "Koordinat Berhasil Disalin",
+                                    //   style: SweetAlertStyle.success,
+                                    //   onPress: (bool isConfirm) {
+                                    //     return true;
+                                    //   }
+                                    // );
                                   }, // button pressed
-                                  child: Column(
+                                  child: const Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: <Widget>[
                                       Icon(Icons.copy, color: Colors.white,), // icon
@@ -338,7 +383,7 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
                         Container(
                           margin: const EdgeInsets.only(right: 5.0),
                           child: SizedBox.fromSize(
-                            size: Size(40, 40), // button width and height
+                            size: const Size(40, 40), // button width and height
                             child: ClipOval(
                               child: Material(
                                 color: Colors.blue, // button color
@@ -347,7 +392,7 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
                                   onTap: () {
                                     _openMap();
                                   }, // button pressed
-                                  child: Column(
+                                  child: const Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: <Widget>[
                                       Icon(Icons.my_location_outlined, color: Colors.white,), // icon
@@ -361,7 +406,7 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
                         Container(
                           margin: const EdgeInsets.only(right: 5.0),
                           child: SizedBox.fromSize(
-                            size: Size(40, 40), // button width and height
+                            size: const Size(40, 40), // button width and height
                             child: ClipOval(
                               child: Material(
                                 color: Colors.blue, // button color
@@ -377,7 +422,7 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
                                       )
                                     );
                                   }, // button pressed
-                                  child: Column(
+                                  child: const Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: <Widget>[
                                       Icon(Icons.location_pin, color: Colors.white,), // icon
@@ -399,33 +444,33 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: EdgeInsets.all(5.0),
+                      padding: const EdgeInsets.all(5.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Catatan BPJT/PMO 1 :', style: TextStyle(fontWeight: FontWeight.bold)),
+                          const Text('Catatan BPJT/PMO 1 :', style: TextStyle(fontWeight: FontWeight.bold)),
                           Text(widget.note == null || widget.note == "" ? '-' : widget.note)
                         ],
                       ),
                     ),
 
                     Padding(
-                      padding: EdgeInsets.all(5.0),
+                      padding: const EdgeInsets.all(5.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Catatan BPJT/PMO 2 :', style: TextStyle(fontWeight: FontWeight.bold)),
+                          const Text('Catatan BPJT/PMO 2 :', style: TextStyle(fontWeight: FontWeight.bold)),
                           Text(widget.note2 == null || widget.note2 == "" ? '-' : widget.note2)
                         ],
                       ),
                     ),
 
                     Padding(
-                      padding: EdgeInsets.all(5.0),
+                      padding: const EdgeInsets.all(5.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Tanggapan PMI :', style: TextStyle(fontWeight: FontWeight.bold)),
+                          const Text('Tanggapan PMI :', style: TextStyle(fontWeight: FontWeight.bold)),
                           Text(widget.noteAnswer == null || widget.noteAnswer == "" ? '-' : widget.noteAnswer)
                         ],
                       ),
@@ -433,22 +478,22 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
                   ],
                 ),
               ),
-              Divider(color: Colors.grey,),
+              const Divider(color: Colors.grey,),
               Padding(
-                padding: EdgeInsets.all(5.0),
+                padding: const EdgeInsets.all(5.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Nama :', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Nama :', style: TextStyle(fontWeight: FontWeight.bold)),
                     Text(widget.name ?? '-'),
-                    SizedBox(height: 5.0),
-                    Text('Jabatan :', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 5.0),
+                    const Text('Jabatan :', style: TextStyle(fontWeight: FontWeight.bold)),
                     Text(widget.position ?? '-'),
-                    SizedBox(height: 5.0),
-                    Text('HP :', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 5.0),
+                    const Text('HP :', style: TextStyle(fontWeight: FontWeight.bold)),
                     Text(widget.phone ?? '-'),
-                    SizedBox(height: 5.0),
-                    Text('Email :', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 5.0),
+                    const Text('Email :', style: TextStyle(fontWeight: FontWeight.bold)),
                     Text(widget.email ?? '-'),
                   ],
                 ),
@@ -462,45 +507,45 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
   }
 
   Widget bottomButton(context) {
-    return Container(
+    return SizedBox(
       height: 60.0,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
+        padding: const EdgeInsets.fromLTRB(10.0, 5.0, 10.0, 5.0),
         child: Row(
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            FlatButton(
-              color: Colors.orange,
-              child: new Text((widget.companyField == 'PMI' ? "Tanggapan" : "Catatan"), style: TextStyle(color: Colors.white),),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange,),
+              child: Text((widget.companyField == 'PMI' ? "Tanggapan" : "Catatan"), style: const TextStyle(color: Colors.white),),
               onPressed: (){
                 showDialog(
                   context: context,
                   builder: (BuildContext context) {
                     return AlertDialog(
-                      title: new Text((widget.companyField == 'PMI' ? "Tanggapan " : "Catatan ")+widget.companyField),
+                      title: Text((widget.companyField == 'PMI' ? "Tanggapan " : "Catatan ")+widget.companyField),
                       content: TextFormField(
                         controller: _noteController,
                         keyboardType: TextInputType.text,
                         autocorrect: false,
                         maxLines: 3,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Isi',
                           labelStyle: TextStyle(decorationStyle: TextDecorationStyle.solid)
                         ),
                       ),
                       actions: <Widget>[
-                        FlatButton(
-                          color: Colors.green,
-                          child: new Text("Simpan", style: TextStyle(color: Colors.white),),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green,),
+                          child: const Text("Simpan", style: TextStyle(color: Colors.white),),
                           onPressed: (){
                             Navigator.pop(context);
                             _saveNote();
                           },
                         ),
-                        FlatButton(
-                          color: Colors.red,
-                          child: new Text("Tutup", style: TextStyle(color: Colors.white),),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red,),
+                          child: const Text("Tutup", style: TextStyle(color: Colors.white),),
                           onPressed: (){
                             Navigator.pop(context);
                           },
@@ -511,10 +556,10 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
                 );
               },
             ),
-            
-            FlatButton(
-              color: Colors.blue,
-              child: new Text("Bagikan", style: TextStyle(color: Colors.white),),
+
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue,),
+              child: const Text("Bagikan", style: TextStyle(color: Colors.white),),
               onPressed: () async {
                 final RenderBox box = context.findRenderObject();
                 if (imageDevicePathList.isEmpty) {
@@ -524,13 +569,14 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
                     }
                   }
                 }
-                if (imageDevicePathList.isNotEmpty) {
-                  await Share.shareFiles(imageDevicePathList,
-                      text: "Laporan Permasalahan Ruas "+widget.segment+" oleh PMI "+widget.name+"\nTanggal : "+DateFormat("dd-MM-yyyy").format(DateTime.parse(widget.date))+"\n\n"+widget.problem,
-                      subject: "Laporan Permasalahan Ruas "+widget.segment,
+                List<XFile> xFileList = imageDevicePathList.map((path) => XFile(path)).toList();
+                if (xFileList.isNotEmpty) {
+                  await Share.shareXFiles(xFileList,
+                      text: "${"Laporan Permasalahan Ruas "+widget.segment+" oleh PMI "+widget.name}\nTanggal : ${DateFormat("dd-MM-yyyy").format(DateTime.parse(widget.date))}\n\n"+widget.problem,
+                      subject: "Laporan Permasalahan Ruas ${widget.segment}",
                       sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size);
                 } else {
-                  await Share.share("Laporan Permasalahan Ruas "+widget.segment+" oleh PMI "+widget.name+"\nTanggal : "+DateFormat("dd-MM-yyyy").format(DateTime.parse(widget.date))+"\n\n"+widget.problem,
+                  await Share.share("${"Laporan Permasalahan Ruas "+widget.segment+" oleh PMI "+widget.name}\nTanggal : ${DateFormat("dd-MM-yyyy").format(DateTime.parse(widget.date))}\n\n"+widget.problem,
                       subject: "Laporan Permasalahan Ruas "+widget.segment,
                       sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size);
                 }
@@ -543,15 +589,15 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
   }
 
   _asyncMethod(String imageUrl) async {
-    var url = imageUrl;
-    var imageName = url.split('/').last;
+    var url = Uri.parse(imageUrl);
+    var imageName = url.toString().split('/').last;
     var response = await get(url);
     var documentDirectory = await getApplicationDocumentsDirectory();
-    var firstPath = documentDirectory.path + "/Pictures";
-    var filePathAndName = documentDirectory.path + '/Pictures/'+imageName; 
+    var firstPath = "${documentDirectory.path}/Pictures";
+    var filePathAndName = '${documentDirectory.path}/Pictures/$imageName';
 
     await Directory(firstPath).create(recursive: true);
-    File file2 = new File(filePathAndName);
+    File file2 = File(filePathAndName);
     file2.writeAsBytesSync(response.bodyBytes);
     setState(() {
       imageDevicePathList.add(filePathAndName);

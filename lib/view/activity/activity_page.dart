@@ -1,18 +1,20 @@
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/helper/db.dart';
-import 'package:bpjtteknik/helper/main_helper.dart';
-import 'package:bpjtteknik/utils/utils.dart';
-import 'package:bpjtteknik/view/activity/activity_detail_page.dart';
-import 'package:bpjtteknik/view/activity/activity_search_page.dart';
-import 'package:bpjtteknik/view/activity/add_activity_page.dart';
-import 'package:bpjtteknik/view/activity/map_activity_page.dart';
-import 'package:bpjtteknik/view/dashboard/dashboard_page.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/db.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/main_helper.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/utils.dart';
+import 'package:bpjt_k_gis_mobile_master/view/activity/activity_detail_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/activity/activity_search_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/activity/add_activity_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/activity/map_activity_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/dashboard/dashboard_page.dart';
 import 'package:expandable/expandable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:package_info/package_info.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+// import 'package:modal_progress_hud/modal_progress_hud.dart';
+// import 'package:package_info/package_info.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -40,7 +42,7 @@ class ActivityPage extends StatefulWidget {
 }
 
 class _ActivityPageState extends State<ActivityPage> {
-  Screen size;
+  late Screen size;
 
   bool _loading = true;
 
@@ -53,16 +55,16 @@ class _ActivityPageState extends State<ActivityPage> {
   var prefRoleId;
   var prefIsApprove;
 
-  int totalData;
-  int currentPage;
+  late int totalData;
+  late int currentPage;
 
-  RefreshController _refreshController = RefreshController(initialRefresh: false);
-  var _activities = [];
+  final RefreshController _refreshController = RefreshController(initialRefresh: false);
+  final _activities = [];
 
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -140,46 +142,47 @@ class _ActivityPageState extends State<ActivityPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Laporan Kegiatan'),
+        title: const Text('Laporan Kegiatan'),
         backgroundColor: colorPrimary,
         actions: [
           GestureDetector(
               onTap: () async {
                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => DashboardPage()));
               },
-              child: Icon(Icons.home, color: Colors.white,),
+              child: const Icon(Icons.home, color: Colors.white,),
           ),
-          SizedBox(width: 10.0,),
+          const SizedBox(width: 10.0,),
           GestureDetector(
               onTap: () async {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => new ActivitySearchPage(
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ActivitySearchPage(
 
                 )));
               },
-              child: Icon(Icons.search, color: Colors.white,),
+              child: const Icon(Icons.search, color: Colors.white,),
           ),
-          SizedBox(width: 10.0,),
+          const SizedBox(width: 10.0,),
         ],
       ),
       body: ModalProgressHUD(
-        child: _activities.length < 1 ? noData() : 
+        inAsyncCall: _loading,
+        child: _activities.length < 1 ? noData() :
           SmartRefresher(
             enablePullDown: true,
             enablePullUp: true,
-            header: WaterDropHeader(),
+            header: const WaterDropHeader(),
             footer: CustomFooter(
-              builder: (BuildContext context,LoadStatus mode){
+              builder: (BuildContext context,LoadStatus? mode){
                 Widget body ;
                 if (mode==LoadStatus.idle) {
-                  body =  Text("pull up load");
+                  body =  const Text("pull up load");
                 } else if (mode==LoadStatus.loading) {
-                  body =  CupertinoActivityIndicator();
+                  body =  const CupertinoActivityIndicator();
                 } else if (mode == LoadStatus.failed) {
-                  body = Text("Load Failed!Click retry!");
+                  body = const Text("Load Failed!Click retry!");
                 } else if (mode == LoadStatus.canLoading) {
-                    body = Text("release to load more");
+                    body = const Text("release to load more");
                 } else {
-                  body = Text("No more Data");
+                  body = const Text("No more Data");
                 }
                 return Container(
                   height: 55.0,
@@ -233,17 +236,17 @@ class _ActivityPageState extends State<ActivityPage> {
                       child: Row(
                         children: <Widget>[
                           Container(
-                            constraints: BoxConstraints(maxWidth: 125.0),
+                            constraints: const BoxConstraints(maxWidth: 125.0),
                             child: Align(
                               alignment: Alignment.topCenter,
                               child: displaySelectedFile(
-                                (_activities[index].isEmpty ? null : 
-                                  (_activities[index]['activity_details'].isEmpty ? null : 
+                                (_activities[index].isEmpty ? null :
+                                  (_activities[index]['activity_details'].isEmpty ? null :
                                     _activities[index]['activity_details'][0]['filepath']
                                   )
-                                ), 
-                                (_activities[index].isEmpty ? null : 
-                                  (_activities[index]['activity_details'].isEmpty ? null : 
+                                ),
+                                (_activities[index].isEmpty ? null :
+                                  (_activities[index]['activity_details'].isEmpty ? null :
                                     _activities[index]['activity_details'][0]['filename'])
                                 )
                               ),
@@ -261,21 +264,21 @@ class _ActivityPageState extends State<ActivityPage> {
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text('${_activities[index]["segment"]}', style: TextStyle(color: Colors.white, fontSize: 16.0, fontWeight: FontWeight.bold)),
+                                      child: Text('${_activities[index]["segment"]}', style: const TextStyle(color: Colors.white, fontSize: 16.0, fontWeight: FontWeight.bold)),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text('Nama : ${_activities[index]["name"]}', style: TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold)),
+                                      child: Text('Nama : ${_activities[index]["name"]}', style: const TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold)),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(3.0, 3.0, 3.0, 0.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text((_activities[index]["date"] != null ? date(DateTime.parse(_activities[index]["date"])) : '-'), style: TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
+                                      child: Text((_activities[index]["date"] != null ? date(DateTime.parse(_activities[index]["date"])) : '-'), style: const TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
                                     ),
                                   ),
                                   Padding(
@@ -285,7 +288,7 @@ class _ActivityPageState extends State<ActivityPage> {
                                       child: Text((
                                         _activities[index]["activity"].length > 50 ?
                                         _activities[index]["activity"].substring(0, 50)+"..." :
-                                        _activities[index]["activity"]) , style: TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
+                                        _activities[index]["activity"]) , style: const TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
                                     ),
                                   ),
                                   // ExpandablePanel(
@@ -323,8 +326,8 @@ class _ActivityPageState extends State<ActivityPage> {
                                   // ),
                                 ],
                               ),
-                            ) 
-                          ),  
+                            )
+                          ),
                         ],
                       ),
                     ),
@@ -333,19 +336,18 @@ class _ActivityPageState extends State<ActivityPage> {
               }
             ),
           ),
-        inAsyncCall: _loading,
       ),
       floatingActionButton: _getFAB()
     );
   }
 
   Widget displaySelectedFile(String path, String url) {
-    if (path == null || path == "") {
+    if (path == "") {
       path = "storage/app/media/activities";
     }
     return SizedBox(
       height: 120.0,
-      child: url == "/" || url == null
+      child: url == "/"
         ? Image.asset("assets/images/no_image_2.png")
         : (url.contains(".pdf") ? Column(children: <Widget>[Image.asset("assets/images/pdf_placeholder.png", width: 120.0,)]) : 
           // Image.network(
@@ -356,7 +358,7 @@ class _ActivityPageState extends State<ActivityPage> {
           Container(
             child: FadeInImage.assetNetwork(
                 placeholder: 'assets/images/no_image_2.png',
-                image: "http://103.6.53.254:13480/bpjt-teknik/public"+path+"/" + url,
+                image: "http://103.6.53.254:13480/bpjt-teknik/public$path/$url",
                 height: 115.0,
             )
           )
@@ -368,32 +370,32 @@ class _ActivityPageState extends State<ActivityPage> {
   Widget _getFAB() {
     return SpeedDial(
       animatedIcon: AnimatedIcons.menu_close,
-      animatedIconTheme: IconThemeData(size: 22),
+      animatedIconTheme: const IconThemeData(size: 22),
       backgroundColor: Colors.white,
       visible: true,
       curve: Curves.bounceIn,
       children: [
         SpeedDialChild(
-          child: Icon(Icons.add),
+          child: const Icon(Icons.add),
           backgroundColor: Colors.white,
           onTap: () { 
             Navigator.push(context, MaterialPageRoute(builder: (context) => AddActivityPage()));  
           },
           label: 'Lapor Kegiatan',
-          labelStyle: TextStyle(
+          labelStyle: const TextStyle(
               fontWeight: FontWeight.w500,
               color: Colors.white,
               fontSize: 16.0),
           labelBackgroundColor: colorPrimary
         ),
         SpeedDialChild(
-          child: Icon(Icons.map),
+          child: const Icon(Icons.map),
           backgroundColor: Colors.white,
           onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => MapActivityPage()));
           },
           label: 'Map Kegiatan',
-          labelStyle: TextStyle(
+          labelStyle: const TextStyle(
               fontWeight: FontWeight.w500,
               color: Colors.white,
               fontSize: 16.0),
@@ -425,7 +427,7 @@ class _ActivityPageState extends State<ActivityPage> {
   Widget noData() {
     size = Screen(MediaQuery.of(context).size);
     return Center(
-      child: Container(
+      child: SizedBox(
         width: size.getWidthPx(300),
         height: size.getWidthPx(300),
         child: Column(

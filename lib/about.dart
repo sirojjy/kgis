@@ -1,7 +1,7 @@
-import 'package:bpjtteknik/utils/utils.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:package_info/package_info.dart';
-
+// import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'helper/main_helper.dart';
 
 class AboutPage extends StatefulWidget {
@@ -10,10 +10,10 @@ class AboutPage extends StatefulWidget {
 }
 
 class _AboutPageState extends State<AboutPage> {
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  String? appName;
+  String? packageName;
+  String? version;
+  String? buildNumber;
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -34,26 +34,48 @@ class _AboutPageState extends State<AboutPage> {
   @override
   Widget build(BuildContext context) {
     var timeNow = DateTime.now();
-    
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Tentang'),
-        backgroundColor: colorPrimary,
-      ),
-      body: Container(
-        alignment: Alignment.center,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("Bidang Teknik", style: TextStyle(fontSize: 20.0),),
-            Text("Badan Pengatur Jalan Tol", style: TextStyle(fontSize: 20.0),),
-            Text("Kementerian PUPR", style: TextStyle(fontSize: 20.0),),
-            Text("${monthIndo(timeNow.month)} ${timeNow.year}"),
-            Text(version == null || version == "" ? 'Loading Version...' : "Versi "+version, style: TextStyle(color: Colors.black, fontStyle: FontStyle.italic), textAlign: TextAlign.center),
-            Text(buildNumber == null || buildNumber == "" ? 'Loading ...' : "+"+buildNumber, style: TextStyle(color: Colors.black, fontStyle: FontStyle.italic, fontSize: 11.0), textAlign: TextAlign.center),
-          ],
+        appBar: AppBar(
+          title: const Text('Tentang'),
+          backgroundColor: colorPrimary,
         ),
-      )
-    );
+        body: Container(
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Bidang Teknik",
+                style: TextStyle(fontSize: 20.0),
+              ),
+              const Text(
+                "Badan Pengatur Jalan Tol",
+                style: TextStyle(fontSize: 20.0),
+              ),
+              const Text(
+                "Kementerian PUPR",
+                style: TextStyle(fontSize: 20.0),
+              ),
+              Text("${monthIndo(timeNow.month)} ${timeNow.year}"),
+              Text(
+                  version == null || version == ""
+                      ? 'Loading Version...'
+                      : "Versi " + version!,
+                  style: const TextStyle(
+                      color: Colors.black, fontStyle: FontStyle.italic),
+                  textAlign: TextAlign.center),
+              Text(
+                  buildNumber == null || buildNumber == ""
+                      ? 'Loading ...'
+                      : "+" + buildNumber!,
+                  style: const TextStyle(
+                      color: Colors.black,
+                      fontStyle: FontStyle.italic,
+                      fontSize: 11.0),
+                  textAlign: TextAlign.center),
+            ],
+          ),
+        ));
   }
 }

@@ -1,12 +1,13 @@
 import 'dart:convert';
 
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/utils/colors.dart';
-import 'package:bpjtteknik/view/user/user_page.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/colors.dart';
+import 'package:bpjt_k_gis_mobile_master/view/user/user_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:intl/intl.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+// import 'package:package_info/package_info.dart';
 import 'package:search_choices/search_choices.dart';
 // import 'package:searchable_dropdown/searchable_dropdown.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,13 +18,13 @@ class UserSearchPage extends StatefulWidget {
 }
 
 class _UserSearchPageState extends State<UserSearchPage> {
-  String _dateFrom;
-  String _dateTo;
-  String _selectedSegment;
-  String _selectedPosition;
+  String? _dateFrom;
+  String? _dateTo;
+  String? _selectedSegment;
+  String? _selectedPosition;
 
-  List _segments = List();
-  List prefSegments = List();
+  List _segments = [];
+  List prefSegments = [];
 
   var prefId;
   var prefName;
@@ -48,10 +49,10 @@ class _UserSearchPageState extends State<UserSearchPage> {
     "Ahli Struktur"
   ];
   
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  String? appName;
+  String? packageName;
+  String? version;
+  String? buildNumber;
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -74,11 +75,12 @@ class _UserSearchPageState extends State<UserSearchPage> {
     prefRoleId = prefs.getString('role_id');
     prefIsApprove = prefs.getBool('is_approve');
     prefSegment = prefs.getString('segment');
-    prefSegments = jsonDecode(prefs.getString('segments'));
+    String? segmentsString = prefs.getString('segments');
+    prefSegments = segmentsString != null ? jsonDecode(segmentsString) : [];
   }
   
   _listSegment() async {
-    await API.getSegment("", "", "", "true", version).then((response) {
+    await API.getSegment("", "", "", "true", version!).then((response) {
       setState(() {
         _segments = response;
       });
@@ -108,7 +110,7 @@ class _UserSearchPageState extends State<UserSearchPage> {
       appBar: AppBar(
         elevation: 0.1,
         backgroundColor: colorPrimary,
-        title: Text("Pencarian"),
+        title: const Text("Pencarian"),
         centerTitle: true,
       ),
       backgroundColor: Colors.white,
@@ -124,104 +126,100 @@ class _UserSearchPageState extends State<UserSearchPage> {
                 keyboardType: TextInputType.text,
                 autocorrect: false,
                 maxLines: 1,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Nama',
                   labelStyle: TextStyle(decorationStyle: TextDecorationStyle.solid)
                 ),
               ),
             ),
-            Container(
-              child: ListTile(
-                title: SearchChoices.single(
-                  items: _segments.map((item) {
-                    return DropdownMenuItem(
-                      value: item,
-                      child: FittedBox(
-                          fit: BoxFit.contain,
-                          child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                      )
-                    );
-                  }).toList(),
-                  selectedValueWidgetFn: (item) {
-                    return Container(
-                      transform: Matrix4.translationValues(-10,0,0),
-                      alignment: Alignment.centerLeft,
-                      child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                    );
-                  },
-                  hint: Container(
+            ListTile(
+              title: SearchChoices.single(
+                items: _segments.map((item) {
+                  return DropdownMenuItem(
+                    value: item,
+                    child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
+                    )
+                  );
+                }).toList(),
+                selectedValueWidgetFn: (item) {
+                  return Container(
                     transform: Matrix4.translationValues(-10,0,0),
-                    child: Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
-                  ),
-                  searchHint: "Pilih Ruas",
-                  onChanged: (value) {
-                    setState(() {
-                      if (value == null) {
-                        _selectedSegment = null;
-                      } else {
-                        _selectedSegment = value;
-                      }
-                    });
-                  },
-                  value: _selectedSegment,
-                  isExpanded: true,
-                  displayClearIcon: false,
-                  underline: Container(color:Colors.black, height:0.5),
-                  icon: Container(
-                    transform: Matrix4.translationValues(10,0,0),
-                    child: Icon(Icons.arrow_drop_down)
-                  ),
+                    alignment: Alignment.centerLeft,
+                    child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
+                  );
+                },
+                hint: Container(
+                  transform: Matrix4.translationValues(-10,0,0),
+                  child: const Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
                 ),
-              )
+                searchHint: "Pilih Ruas",
+                onChanged: (value) {
+                  setState(() {
+                    if (value == null) {
+                      _selectedSegment = null;
+                    } else {
+                      _selectedSegment = value;
+                    }
+                  });
+                },
+                value: _selectedSegment,
+                isExpanded: true,
+                displayClearIcon: false,
+                underline: Container(color:Colors.black, height:0.5),
+                icon: Container(
+                  transform: Matrix4.translationValues(10,0,0),
+                  child: const Icon(Icons.arrow_drop_down)
+                ),
+              ),
             ),
-            Container(
-              child: ListTile(
-                title: SearchChoices.single(
-                  items: positions.map((item) {
-                    return DropdownMenuItem(
-                      value: item,
-                      child: FittedBox(
-                          fit: BoxFit.contain,
-                          child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                      )
-                    );
-                  }).toList(),
-                  selectedValueWidgetFn: (item) {
-                    return Container(
-                      transform: Matrix4.translationValues(-10,0,0),
-                      alignment: Alignment.centerLeft,
-                      child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                    );
-                  },
-                  hint: Container(
+            ListTile(
+              title: SearchChoices.single(
+                items: positions.map((item) {
+                  return DropdownMenuItem(
+                    value: item,
+                    child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
+                    )
+                  );
+                }).toList(),
+                selectedValueWidgetFn: (item) {
+                  return Container(
                     transform: Matrix4.translationValues(-10,0,0),
-                    child: Text("Pilih Jabatan", style: TextStyle(color: Colors.black),)
-                  ),
-                  searchHint: "Pilih Jabatan",
-                  onChanged: (value) {
-                    setState(() {
-                      if (value == null) {
-                        _selectedPosition = null;
-                      } else {
-                        _selectedPosition = value;
-                      }
-                    });
-                  },
-                  value: _selectedPosition,
-                  isExpanded: true,
-                  displayClearIcon: false,
-                  underline: Container(color:Colors.black, height:0.5),
-                  icon: Container(
-                    transform: Matrix4.translationValues(10,0,0),
-                    child: Icon(Icons.arrow_drop_down)
-                  ),
+                    alignment: Alignment.centerLeft,
+                    child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
+                  );
+                },
+                hint: Container(
+                  transform: Matrix4.translationValues(-10,0,0),
+                  child: const Text("Pilih Jabatan", style: TextStyle(color: Colors.black),)
                 ),
-              )
+                searchHint: "Pilih Jabatan",
+                onChanged: (value) {
+                  setState(() {
+                    if (value == null) {
+                      _selectedPosition = null;
+                    } else {
+                      _selectedPosition = value;
+                    }
+                  });
+                },
+                value: _selectedPosition,
+                isExpanded: true,
+                displayClearIcon: false,
+                underline: Container(color:Colors.black, height:0.5),
+                icon: Container(
+                  transform: Matrix4.translationValues(10,0,0),
+                  child: const Icon(Icons.arrow_drop_down)
+                ),
+              ),
             ),
             Container(
               margin: const EdgeInsets.only(left: 15.0, right: 15.0, top: 5.0),
               child: FormBuilderDateTimePicker(
-                attribute: 'date',
+                name: 'date',
                 onChanged: (val) => {
                   setState(() {
                     _dateFrom = val.toString().split(' ')[0];
@@ -238,7 +236,7 @@ class _UserSearchPageState extends State<UserSearchPage> {
             Container(
               margin: const EdgeInsets.only(left: 15.0, right: 15.0, top: 5.0),
               child: FormBuilderDateTimePicker(
-                attribute: 'date',
+                name: 'date',
                 onChanged: (val) => {
                   setState(() {
                     _dateTo = val.toString().split(' ')[0];
@@ -252,9 +250,10 @@ class _UserSearchPageState extends State<UserSearchPage> {
                 format: DateFormat('yyyy-MM-dd'),
               ),
             ),
-            FlatButton(
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: colorPrimary),
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => new UserPage(
+                Navigator.push(context, MaterialPageRoute(builder: (context) => UserPage(
                   segment: _selectedSegment,
                   position: _selectedPosition,
                   dateFrom: _dateFrom,
@@ -262,8 +261,7 @@ class _UserSearchPageState extends State<UserSearchPage> {
                   name: _nameController.text,
                 )));
               },
-              color: colorPrimary,
-              child: Text("Cari", style: TextStyle(color: Colors.white)),
+              child: const Text("Cari", style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

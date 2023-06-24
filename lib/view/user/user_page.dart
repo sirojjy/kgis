@@ -1,15 +1,17 @@
 import 'dart:convert';
 
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/utils/colors.dart';
-import 'package:bpjtteknik/utils/responsive_screen.dart';
-import 'package:bpjtteknik/view/dashboard/dashboard_page.dart';
-import 'package:bpjtteknik/view/user/user_detail_page.dart';
-import 'package:bpjtteknik/view/user/user_search_page.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/colors.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/responsive_screen.dart';
+import 'package:bpjt_k_gis_mobile_master/view/dashboard/dashboard_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/user/user_detail_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/user/user_search_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:package_info/package_info.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+// import 'package:modal_progress_hud/modal_progress_hud.dart';
+// import 'package:package_info/package_info.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -39,8 +41,8 @@ class UserPage extends StatefulWidget {
 class _UserPageState extends State<UserPage> {
   bool _loading = true;
 
-  int totalData;
-  int currentPage;
+  int? totalData;
+  int? currentPage;
 
   var prefId;
   var prefName;
@@ -51,15 +53,15 @@ class _UserPageState extends State<UserPage> {
   var prefRoleId;
   var prefIsApprove;
   var prefSegment;
-  List prefSegments = List();
+  List prefSegments = [];
   
   RefreshController _refreshController = RefreshController(initialRefresh: false);
   var _users = [];
   
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  String? appName;
+  String? packageName;
+  String? version;
+  String? buildNumber;
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -76,18 +78,18 @@ class _UserPageState extends State<UserPage> {
       setState(() {
         currentPage = 1;
       });
-    } else if (_users.length >= totalData) {
+    } else if (_users.length >= totalData!) {
       return;
     }
 
-    await API.getUsersAll(currentPage, widget.segment, widget.position, widget.dateFrom, widget.dateTo, widget.name, widget.region, widget.companyField, version).then((response) {
+    await API.getUsersAll(currentPage!, widget.segment, widget.position, widget.dateFrom, widget.dateTo, widget.name, widget.region, widget.companyField, version!).then((response) {
       if (!mounted) return;
       setState(() {
         if (response != null) {
           if (response["data"].length > 0) {
             totalData = response['nav']['totalData'];
             _users.addAll(response["data"]);
-            currentPage = currentPage + 1;
+            currentPage = currentPage! + 1;
           }
         }
       });
@@ -105,7 +107,8 @@ class _UserPageState extends State<UserPage> {
     prefRoleId = prefs.getString('role_id');
     prefIsApprove = prefs.getBool('is_approve');
     prefSegment = prefs.getString('segment');
-    prefSegments = jsonDecode(prefs.getString('segments'));
+    String? segmentsString = prefs.getString('segments');
+    prefSegments = segmentsString != null ? jsonDecode(segmentsString) : [];
   }
   
   @override
@@ -132,48 +135,49 @@ class _UserPageState extends State<UserPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Daftar Pengguna'),
+        title: const Text('Daftar Pengguna'),
         backgroundColor: colorPrimary,
         actions: [
           GestureDetector(
               onTap: () async {
                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => DashboardPage()));
               },
-              child: Icon(Icons.home, color: Colors.white,),
+              child: const Icon(Icons.home, color: Colors.white,),
           ),
-          SizedBox(width: 10.0,),
+          const SizedBox(width: 10.0,),
           Container(
-            margin: EdgeInsets.only(right: 10.0),
+            margin: const EdgeInsets.only(right: 10.0),
             child: GestureDetector(
               onTap: () async {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => new UserSearchPage(
 
                 )));
               },
-              child: Icon(Icons.search, color: Colors.white,),
+              child: const Icon(Icons.search, color: Colors.white,),
             ),
           )
         ],
       ),
       body: ModalProgressHUD(
-        child: _users.length < 1 ? noData() : 
+        inAsyncCall: _loading,
+        child: _users.length < 1 ? noData() :
           SmartRefresher(
             enablePullDown: true,
             enablePullUp: true,
-            header: WaterDropHeader(),
+            header: const WaterDropHeader(),
             footer: CustomFooter(
-              builder: (BuildContext context,LoadStatus mode){
+              builder: (BuildContext context,LoadStatus? mode){
                 Widget body ;
                 if (mode == LoadStatus.idle) {
-                  body =  Text("pull up load");
+                  body =  const Text("pull up load");
                 } else if (mode == LoadStatus.loading) {
-                  body =  CupertinoActivityIndicator();
+                  body =  const CupertinoActivityIndicator();
                 } else if (mode == LoadStatus.failed) {
-                  body = Text("Load Failed! Click retry!");
+                  body = const Text("Load Failed! Click retry!");
                 } else if (mode == LoadStatus.canLoading) {
-                    body = Text("release to load more");
+                    body = const Text("release to load more");
                 } else {
-                  body = Text("No more Data");
+                  body = const Text("No more Data");
                 }
                 return Container(
                   height: 55.0,
@@ -225,18 +229,20 @@ class _UserPageState extends State<UserPage> {
                           Container(
                             margin: const EdgeInsets.all(5.0),
                             height: 120.0,
-                            constraints: BoxConstraints(maxWidth: 100.0, minWidth: 100.0),
+                            constraints: const BoxConstraints(maxWidth: 100.0, minWidth: 100.0),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               image: DecorationImage(
                                 fit: BoxFit.cover,
-                                image: 
+                                image:
                                   _users[index]["filepath"] != null && _users[index]["filename"] != null ?
-                                    NetworkImage(
-                                      "http://103.6.53.254:13480/bpjt-teknik/public"+_users[index]["filepath"]+"/"+_users[index]["filename"],
+                                  NetworkImage (
+                                    "${"http://103.6.53.254:13480/bpjt-teknik/public" +
+                                        _users[index]["filepath"]}/" +
+                                        _users[index]["filename"],
                                   )
                                   :
-                                  AssetImage('assets/images/person_6x8.png')
+                                  const AssetImage('assets/images/person_6x8.png') as ImageProvider<Object>,
                               )
                             ),
                             // child: ClipOval(
@@ -260,41 +266,41 @@ class _UserPageState extends State<UserPage> {
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text(_users[index]["name"] ?? '-', style: TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold)),
+                                      child: Text(_users[index]["name"] ?? '-', style: const TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold)),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text(_users[index]["phone"] ?? '-', style: TextStyle(color: Colors.white, fontSize: 14.0)),
+                                      child: Text(_users[index]["phone"] ?? '-', style: const TextStyle(color: Colors.white, fontSize: 14.0)),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text(_users[index]["email"] ?? '-', style: TextStyle(color: Colors.white, fontSize: 14.0)),
+                                      child: Text(_users[index]["email"] ?? '-', style: const TextStyle(color: Colors.white, fontSize: 14.0)),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text(_users[index]["position"] ?? '-', style: TextStyle(color: Colors.white, fontSize: 14.0)),
+                                      child: Text(_users[index]["position"] ?? '-', style: const TextStyle(color: Colors.white, fontSize: 14.0)),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text(_users[index]["company_field"] ?? '-', style: TextStyle(color: Colors.white, fontSize: 14.0)),
+                                      child: Text(_users[index]["company_field"] ?? '-', style: const TextStyle(color: Colors.white, fontSize: 14.0)),
                                     ),
                                   ),
                                 ],
                               ),
-                            ) 
-                          ),  
+                            )
+                          ),
                         ],
                       ),
                     ),
@@ -303,7 +309,6 @@ class _UserPageState extends State<UserPage> {
               }
             ),
           ),
-        inAsyncCall: _loading,
       )
     );
   }

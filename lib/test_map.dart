@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:js_interop';
+import 'package:flutter/widgets.dart';
 
-import 'package:bpjtteknik/utils/colors.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:latlong/latlong.dart';
-import 'package:package_info/package_info.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:proj4dart/proj4dart.dart' as proj4;
 import 'package:search_choices/search_choices.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,14 +27,14 @@ class TestMapPage extends StatefulWidget {
 class _TestMapPageState extends State<TestMapPage> {
   final GlobalKey _mapKey = GlobalKey();
 
-  MapController mapController;
+  late MapController mapController = MapController();
 
-  StateSetter _setStateInsideFilter;
+  late StateSetter _setStateInsideFilter;
 
-  int width;
-  int height;
+  late int width;
+  late int height;
 
-  Position _position;
+  late Position _position;
 
   var prefId;
   var prefName;
@@ -42,23 +44,23 @@ class _TestMapPageState extends State<TestMapPage> {
   var prefEmail;
   var prefRoleId;
   var prefIsApprove;
-  List prefSegments = List();
+  List<dynamic> prefSegments = [];
   var prefMapType;
   var prefPosition;
 
-  List _segmentRegion = List();
-  List _segment = List();
+  List<dynamic> _segmentRegion = [];
+  List _segment = [];
   List<StreamSubscription<dynamic>> _streamSubscriptions = <StreamSubscription<dynamic>>[];
 
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String appName;
+  String? packageName;
+  String? version;
+  String? buildNumber;
 
-  String _selectedStatus;
-  String _selectedSubStatus;
-  String _selectedRegion;
-  String _selectedSegment;
+  String? _selectedStatus;
+  String? _selectedSubStatus;
+  String? _selectedRegion;
+  String? _selectedSegment;
 
   String _currentLayer = "";
   
@@ -99,7 +101,7 @@ class _TestMapPageState extends State<TestMapPage> {
   }
 
   _listSegmentRegion() async {
-    await API.getSegmentRegion("", "", version).then((response) {
+    await API.getSegmentRegion("", "", version!).then((response) {
       if (!mounted) return;
       showUpdateAppsModal(context, response);
       setState(() {
@@ -109,7 +111,7 @@ class _TestMapPageState extends State<TestMapPage> {
   }
 
   _listSegment(String status, String subStatus, String region) async {
-    await API.getSegment(status, subStatus, region, "true", version).then((response) {
+    await API.getSegment(status, subStatus, region, "true", version!).then((response) {
       if (!mounted) return;      
       _setStateInsideFilter(() {
         if (prefCompanyField == "PMI") {
@@ -125,23 +127,41 @@ class _TestMapPageState extends State<TestMapPage> {
       });
     });
   }
-
   _addLocationStream() {
     StreamSubscription<Position> positionStream = Geolocator.getPositionStream(desiredAccuracy: LocationAccuracy.high, distanceFilter: 10)
         .listen((Position position) {
       if (!mounted) return;
       setState(() {
         _position = position;
-        if (position.latitude != null && position.longitude != null && mapController.ready) {
-          mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
-        }
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (position.latitude != null && position.longitude != null) {
+            mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
+          }
+        });
+        // if (position.latitude != null && position.longitude != null && mapController.ready) {
+        //   mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
+        // }
       });
     });
     _streamSubscriptions.add(positionStream);
   }
+
+  // _addLocationStream() {
+  //   StreamSubscription<Position> positionStream = Geolocator.getPositionStream(desiredAccuracy: LocationAccuracy.high, distanceFilter: 10)
+  //       .listen((Position position) {
+  //     if (!mounted) return;
+  //     setState(() {
+  //       _position = position;
+  //       if (position.latitude != null && position.longitude != null && mapController.ready) {
+  //         mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
+  //       }
+  //     });
+  //   });
+  //   _streamSubscriptions.add(positionStream);
+  // }
   
   void _submit() async {
-    await API.getMapService("", "", _selectedRegion, _selectedSegment, version).then((response) {
+    await API.getMapService("", "", _selectedRegion!, _selectedSegment!, version!).then((response) {
       if (!mounted) return;
         if (response.length > 0) {
           _currentLayer = response[0]["nama_layer"];
@@ -155,7 +175,7 @@ class _TestMapPageState extends State<TestMapPage> {
   _filterSegment(context) async {
     showModalBottomSheet<void>(
       context: context,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(25),
           topRight: Radius.circular(25)
@@ -167,120 +187,115 @@ class _TestMapPageState extends State<TestMapPage> {
             _setStateInsideFilter = setState;
 
             return
-            Container(
+            SizedBox(
               height: height * 0.42,
               child: Padding(
-                padding: EdgeInsets.all(10.0),
+                padding: const EdgeInsets.all(10.0),
                 child: ListView(
                   children: [
-                    SizedBox(height: 30.0),
+                    const SizedBox(height: 30.0),
                     Container(
                       padding: const EdgeInsets.only(left: 10.0),
-                      child: Text("Silahkan Filter Untuk Menampilkan Peta", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),)
+                      child: const Text("Silahkan Filter Untuk Menampilkan Peta", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),)
                     ),
-                    SizedBox(height: 30.0),
+                    const SizedBox(height: 30.0),
                     Container(
                       padding: const EdgeInsets.only(left: 10.0),
-                      child: Text("Region")
+                      child: const Text("Region")
                     ),
-                    Container(
-                      child: ListTile(
-                        title: DropdownButton(
-                          isExpanded: true,
-                          hint: Row(
-                            children: <Widget>[
-                              Text('Pilih Region'),
-                            ],
-                          ),
-                          items: _segmentRegion.map((item) {
-                            return DropdownMenuItem(
-                              value: item.toString(),
-                              child: FittedBox(
-                                  fit: BoxFit.contain,
-                                  child: Text(item, style: TextStyle(fontSize: 13.0, color: Colors.black),)
-                              )
-                            );
-                          }).toList(),
-                          onChanged: (newVal) {
-                            _listSegment(_selectedStatus, _selectedSubStatus, newVal);
-                            
-                            setState(() {
-                              _selectedSegment = null;
-                              _selectedRegion = newVal;
-                            });
-                          },
-                          value: _selectedRegion,
-                          underline: Container(color:Colors.black, height:0.5),
+                    ListTile(
+                      title: DropdownButton(
+                        isExpanded: true,
+                        hint: const Row(
+                          children: <Widget>[
+                            Text('Pilih Region'),
+                          ],
                         ),
+                        items: _segmentRegion.map((item) {
+                          return DropdownMenuItem(
+                            value: item.toString(),
+                            child: FittedBox(
+                                fit: BoxFit.contain,
+                                child: Text(item, style: const TextStyle(fontSize: 13.0, color: Colors.black),)
+                            )
+                          );
+                        }).toList(),
+                        onChanged: (newVal) {
+                          _listSegment(_selectedStatus!, _selectedSubStatus!, newVal!);
+
+                          setState(() {
+                            _selectedSegment = null;
+                            _selectedRegion = newVal;
+                          });
+                        },
+                        value: _selectedRegion,
+                        underline: Container(color:Colors.black, height:0.5),
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.only(left: 10.0),
-                      child: Text("Ruas")
+                      child: const Text("Ruas")
                     ),
-                    Container(
-                      child: ListTile(
-                        title: SearchChoices.single(
-                          items: _segment.map((item) {
-                            return DropdownMenuItem(
-                              value: item,
-                              child: FittedBox(
-                                  fit: BoxFit.contain,
-                                  child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                              )
+                    ListTile(
+                      title: SearchChoices.single(
+                        items: _segment.map((item) {
+                          return DropdownMenuItem(
+                            value: item,
+                            child: FittedBox(
+                                fit: BoxFit.contain,
+                                child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
+                            )
+                          );
+                        }).toList(),
+                        selectedValueWidgetFn: (item) {
+                          if (_selectedSegment == null) {
+                            return Container(
+                              transform: Matrix4.translationValues(-10,0,0),
+                              alignment: Alignment.centerLeft,
+                              child: const Text("", style: TextStyle(fontSize: 12.0, color: Colors.black),)
                             );
-                          }).toList(),
-                          selectedValueWidgetFn: (item) {
-                            if (_selectedSegment == null) {
-                              return Container(
-                                transform: Matrix4.translationValues(-10,0,0),
-                                alignment: Alignment.centerLeft,
-                                child: Text("", style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                              );
-                            } else {
-                              return Container(
-                                transform: Matrix4.translationValues(-10,0,0),
-                                alignment: Alignment.centerLeft,
-                                child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                              );
-                            }
-                          },
-                          hint: Container(
-                            transform: Matrix4.translationValues(-10,0,0),
-                            child: Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
-                          ),
-                          searchHint: "Pilih Ruas",
-                          onChanged: (newVal) {
-                            setState(() {
-                              _selectedSegment = newVal;
-                            });
-                          },
-                          value: _selectedSegment,
-                          isExpanded: true,
-                          displayClearIcon: false,
-                          underline: Container(color:Colors.black, height:0.5),
-                          icon: Container(
-                            transform: Matrix4.translationValues(10,0,0),
-                            child: Icon(Icons.arrow_drop_down)
-                          ),
+                          } else {
+                            return Container(
+                              transform: Matrix4.translationValues(-10,0,0),
+                              alignment: Alignment.centerLeft,
+                              child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
+                            );
+                          }
+                        },
+                        hint: Container(
+                          transform: Matrix4.translationValues(-10,0,0),
+                          child: const Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
+                        ),
+                        searchHint: "Pilih Ruas",
+                        onChanged: (newVal) {
+                          setState(() {
+                            _selectedSegment = newVal;
+                          });
+                        },
+                        value: _selectedSegment,
+                        isExpanded: true,
+                        displayClearIcon: false,
+                        underline: Container(color:Colors.black, height:0.5),
+                        icon: Container(
+                          transform: Matrix4.translationValues(10,0,0),
+                          child: const Icon(Icons.arrow_drop_down)
                         ),
                       ),
                     ),
-                    Container(
-                      // width: MediaQuery.of(context).size.width * 0.8,
-                      child: RaisedButton(
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
                         elevation: 0.8,
+                        backgroundColor: colorPrimary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),
-                        onPressed: () {
-                          _submit();
-                          Navigator.pop(context);
-                        },
-                        padding: EdgeInsets.all(12),
-                        color: colorPrimary,
-                        child: Text('SUBMIT', style: TextStyle(color: Colors.white)),
+                        padding: const EdgeInsets.all(12),
                       ),
+                      onPressed: () {
+                        _submit();
+                        Navigator.pop(context);
+                      },
+                      child: const Text('SUBMIT', style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 )
@@ -293,12 +308,12 @@ class _TestMapPageState extends State<TestMapPage> {
   }
 
   _getFeatureInfo(context, proj4.Point coord) async {
-    var north = mapController.bounds.north;
-    var east  = mapController.bounds.east;
-    var south = mapController.bounds.south;
-    var west = mapController.bounds.west;
-    var mapWidth = _mapKey.currentContext.size.width.toInt();
-    var mapHeight = _mapKey.currentContext.size.height.toInt();
+    var north = mapController.bounds?.north;
+    var east  = mapController.bounds?.east;
+    var south = mapController.bounds?.south;
+    var west = mapController.bounds?.west;
+    var mapWidth = _mapKey.currentContext?.size?.width.toInt();
+    var mapHeight = _mapKey.currentContext?.size?.height.toInt();
 
     print("West : $west");
     print("South : $south");
@@ -308,9 +323,9 @@ class _TestMapPageState extends State<TestMapPage> {
     print("Height : $mapHeight");
     print("Coord X : ${coord.y}");
     print("Coord Y : ${coord.x}");
-    print("http://103.6.53.254:13480/kgis/index.php/wms/info/${_currentLayer}/$west~$south~$east~$north/$mapWidth/$mapHeight/${coord.y}/${coord.x}");
+    print("http://103.6.53.254:13480/kgis/index.php/wms/info/$_currentLayer/$west~$south~$east~$north/$mapWidth/$mapHeight/${coord.y}/${coord.x}");
     
-    await API.getFeatureInfo("http://103.6.53.254:13480/kgis/index.php/wms/info/${_currentLayer}/$west~$south~$east~$north/$mapWidth/$mapHeight/${coord.y}/${coord.x}").then((response) {
+    await API.getFeatureInfo("http://103.6.53.254:13480/kgis/index.php/wms/info/$_currentLayer/$west~$south~$east~$north/$mapWidth/$mapHeight/${coord.y}/${coord.x}").then((response) {
       if (!mounted) return;
       print("Response From Server :");
       print(response['data']);
@@ -318,38 +333,38 @@ class _TestMapPageState extends State<TestMapPage> {
       if (response['data'] != null) {
         showModalBottomSheet<void>(
           context: context,
-          shape: RoundedRectangleBorder(
+          shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(25),
               topRight: Radius.circular(25)
             ),
           ),
           builder: (BuildContext context) {
-            return Container(
+            return SizedBox(
               height: height * 0.40,
               child: Padding(
-                padding: EdgeInsets.all(10.0),
+                padding: const EdgeInsets.all(10.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 25.0),
+                    const SizedBox(height: 25.0),
                     Center(
-                      child: Text("Ruas : ${response['data']['ruas']}", style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                      child: Text("Ruas : ${response['data']['ruas']}", style: const TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                     ),
                     response['data']['jenis'] != null ?
                       Center(
-                        child: Text("Jenis : ${response['data']['jenis']}", style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                        child: Text("Jenis : ${response['data']['jenis']}", style: const TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                       )
                     :
                       Container(),
-                    SizedBox(height: 25.0),
-                    Text("Nama : ${response['data']['nama']}", style: TextStyle(fontSize: 15.0)),
-                    Text("STA : ${response['data']['sta']}", style: TextStyle(fontSize: 15.0)),
-                    Text("Region : ${response['data']['region']}", style: TextStyle(fontSize: 15.0)),
-                    Text("BUJT : ${response['data']['bujt']}", style: TextStyle(fontSize: 15.0)),
-                    Text("Kode : ${response['data']['kodefikasi']}", style: TextStyle(fontSize: 15.0)),
-                    Text("Status : ${response['data']['status']}", style: TextStyle(fontSize: 15.0)),
-                    Text("Sub Status : ${response['data']['sub_status']}", style: TextStyle(fontSize: 15.0)),
+                    const SizedBox(height: 25.0),
+                    Text("Nama : ${response['data']['nama']}", style: const TextStyle(fontSize: 15.0)),
+                    Text("STA : ${response['data']['sta']}", style: const TextStyle(fontSize: 15.0)),
+                    Text("Region : ${response['data']['region']}", style: const TextStyle(fontSize: 15.0)),
+                    Text("BUJT : ${response['data']['bujt']}", style: const TextStyle(fontSize: 15.0)),
+                    Text("Kode : ${response['data']['kodefikasi']}", style: const TextStyle(fontSize: 15.0)),
+                    Text("Status : ${response['data']['status']}", style: const TextStyle(fontSize: 15.0)),
+                    Text("Sub Status : ${response['data']['sub_status']}", style: const TextStyle(fontSize: 15.0)),
                   ],
                 )
               )
@@ -370,7 +385,7 @@ class _TestMapPageState extends State<TestMapPage> {
     prefEmail = prefs.getString('email');
     prefRoleId = prefs.getString('role_id');
     prefIsApprove = prefs.getBool('is_approve');
-    prefSegments = prefs.getString('segments') != null ? jsonDecode(prefs.getString('segments')) : null;
+    prefSegments = prefs.getString('segments') != null ? jsonDecode(prefs.getString('segments')!) : null;
     prefMapType = prefs.getString('map_type');
     prefPosition = prefs.getString('position');
   }
@@ -382,7 +397,7 @@ class _TestMapPageState extends State<TestMapPage> {
     
     return Scaffold(
       appBar: AppBar(
-        title: Text('Testing'),
+        title: const Text('Testing'),
         backgroundColor: colorPrimary,
         actions: [
           Visibility(
@@ -403,7 +418,7 @@ class _TestMapPageState extends State<TestMapPage> {
                 children: [
                   Container(
                     margin: const EdgeInsets.only(right: 10.0),
-                    child: Icon(Icons.layers),
+                    child: const Icon(Icons.layers),
                   ),
                 ],
               )
@@ -412,11 +427,11 @@ class _TestMapPageState extends State<TestMapPage> {
         ],
       ),
       body: Padding(
-        padding: EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(8.0),
         child: _position == null ?
         Center(
           child: Container(
-            child: Column(
+            child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircularProgressIndicator(),
@@ -434,15 +449,15 @@ class _TestMapPageState extends State<TestMapPage> {
                 key: _mapKey,
                 mapController: mapController,
                 options: MapOptions(
-                  crs: Epsg4326(),
+                  crs: const Epsg4326(),
                   center: LatLng(point.x, point.y),
                   zoom: 12,
-                  onTap: (p) => setState(() {
-                    point = proj4.Point(x: p.latitude, y: p.longitude);
+                  onTap: (tapPosition, LatLng LatLng) => setState(() {
+                    point = proj4.Point(x: LatLng.latitude, y: LatLng.longitude);
                     _getFeatureInfo(context, point);
                   }),
                 ),
-                layers: [
+                children: [
                   // TileLayerOptions(
                   //   wmsOptions: WMSTileLayerOptions(
                   //     crs: Epsg4326(),
@@ -450,34 +465,32 @@ class _TestMapPageState extends State<TestMapPage> {
                   //     layers: ['s2cloudless-2019', 'overlay_base'],
                   //   ),
                   // ),
-                  TileLayerOptions(
+                  TileLayer(
                     wmsOptions: WMSTileLayerOptions(
-                      crs: Epsg4326(),
+                      crs: const Epsg4326(),
                       baseUrl: 'https://tiles.maps.eox.at/?',
                       layers: ['osm'],
                     ),
                   ),
 
-                  TileLayerOptions(
+                  TileLayer(
                     backgroundColor: Colors.transparent,
                     wmsOptions: WMSTileLayerOptions(
-                      crs: Epsg4326(),
+                      crs: const Epsg4326(),
                       transparent: true,
                       format: 'image/png',
                       baseUrl: 'http://103.6.53.254:13480/geoserver/bpjt/wms?',
                       layers: [_currentLayer],
                     ),
                   ),
-                  MarkerLayerOptions(
+                  MarkerLayer(
                     markers: [
                       Marker(
                         width: 80.0,
                         height: 80.0,
                         point: LatLng(_position.latitude, _position.longitude),
                         builder: (ctx) =>
-                        Container(
-                          child: Icon(Icons.my_location, color: Colors.red,),
-                        ),
+                        const Icon(Icons.my_location, color: Colors.red,),
                       ),
                     ],
                   ),
@@ -489,16 +502,16 @@ class _TestMapPageState extends State<TestMapPage> {
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: "btn2",
-        child: Icon(
-          Icons.gps_fixed,
-          color: Colors.white,
-        ),
         onPressed: () {
           setState(() {
             mapController.move(LatLng(_position.latitude, _position.longitude), mapController.zoom);
           });
         },
         backgroundColor: HexColor("#374774"),
+        child: const Icon(
+          Icons.gps_fixed,
+          color: Colors.white,
+        ),
       ),
     );
   }

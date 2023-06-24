@@ -1,7 +1,7 @@
-import 'package:bpjtteknik/utils/utils.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:package_info/package_info.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'conn/API.dart';
@@ -29,15 +29,15 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     });
   }
   
-  String prefId;
+  String? prefId;
 
   TextEditingController oldPassword = TextEditingController();
   TextEditingController newPassword = TextEditingController();
 
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  String? appName;
+  String? packageName;
+  String? version;
+  String? buildNumber;
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -62,10 +62,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     });
 
     await API.changePasswords(
-      prefId,
+      prefId!,
       oldPassword.text,
       newPassword.text,
-      version
+      version!,
     ).then((response) {
       if (response["status"] == "success") {
         _showDialog(context, response["message"], "Sukses!", true);
@@ -86,8 +86,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         title: Text(title),
         content: Text(msg),
         actions: <Widget>[
-          FlatButton(
-            child: Text("Ok"),
+          ElevatedButton(
+            child: const Text("Ok"),
             onPressed: () async {
               if (!isPageChange) {
                 return Navigator.pop(context);
@@ -130,11 +130,12 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Ubah Password'),
+        title: const Text('Ubah Password'),
         backgroundColor: colorPrimary,
       ),
-      body: prefId == "" || prefId == null ? Center(child: CircularProgressIndicator()) :
+      body: prefId == "" || prefId == null ? const Center(child: CircularProgressIndicator()) :
         ModalProgressHUD(
+          inAsyncCall: _loading,
           child: Container(
             alignment: Alignment.topCenter,
             child: SingleChildScrollView(
@@ -143,23 +144,23 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   SizedBox(
                     height: heightSize * 0.01,
                   ),
-                  Container(
+                  SizedBox(
                     width: widthSize * 0.9,
-                    child: Text("Password Lama")
+                    child: const Text("Password Lama")
                   ),
-                  Container(
+                  SizedBox(
                     width: widthSize * 0.9,
                     child: TextFormField(
                       controller: oldPassword,
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                             color: Colors.grey,
                           ),
                           borderRadius: BorderRadius.circular(4.0),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                             color: Colors.grey,
                           ),
                           borderRadius: BorderRadius.circular(4.0),
@@ -180,23 +181,23 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   SizedBox(
                     height: heightSize * 0.01,
                   ),
-                  Container(
+                  SizedBox(
                     width: widthSize * 0.9,
-                    child: Text("Password Baru")
+                    child: const Text("Password Baru")
                   ),
-                  Container(
+                  SizedBox(
                     width: widthSize * 0.9,
                     child: TextFormField(
                       controller: newPassword,
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                             color: Colors.grey,
                           ),
                           borderRadius: BorderRadius.circular(4.0),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                             color: Colors.grey,
                           ),
                           borderRadius: BorderRadius.circular(4.0),
@@ -217,19 +218,20 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   SizedBox(
                     height: heightSize * 0.01,
                   ),
-                  Container(
-                      child: RaisedButton(
-                        elevation: 0.8,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        onPressed: () {
-                          _changePasswords();
-                        },
-                        padding: EdgeInsets.all(12),
-                        color: colorPrimary,
-                        child: Text('SUBMIT', style: TextStyle(color: Colors.white)),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0.8,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5),
                       ),
+
+                      padding: const EdgeInsets.all(12),
+                      backgroundColor: colorPrimary,
+                    ),
+                    onPressed: () {
+                      _changePasswords();
+                    },
+                    child: const Text('SUBMIT', style: TextStyle(color: Colors.white)),
                   ),
                   SizedBox(
                     height: heightSize * 0.05,
@@ -238,7 +240,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               )
             )
           ),
-          inAsyncCall: _loading,
         ),
     );
   }

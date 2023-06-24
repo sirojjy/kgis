@@ -1,22 +1,19 @@
-// import 'package:awesome_notifications/awesome_notifications.dart';
-// import 'package:bpjtteknik/helper/db_presences.dart';
-import 'package:bpjtteknik/utils/utils.dart';
-import 'package:bpjtteknik/view/auth/login.dart';
-import 'package:bpjtteknik/view/dashboard/dashboard_admin_page.dart';
-import 'package:bpjtteknik/view/dashboard/dashboard_page.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/utils.dart';
+import 'package:bpjt_k_gis_mobile_master/view/auth/login.dart';
+import 'package:bpjt_k_gis_mobile_master/view/dashboard/dashboard_admin_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/dashboard/dashboard_page.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
-// import 'package:intl/intl.dart';
-import 'package:package_info/package_info.dart';
-// import 'package:path_provider/path_provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:workmanager/workmanager.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'conn/API.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   // AwesomeNotifications().initialize(
   //     null,
   //     [
@@ -98,7 +95,7 @@ class MyApp extends StatelessWidget {
   final isApprove;
   final roleId;
 
-  MyApp({Key key, @required this.email, @required this.isApprove, @required this.roleId}) : super(key: key);
+  MyApp({Key? key, @required this.email, @required this.isApprove, @required this.roleId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -128,25 +125,25 @@ class CollectionApp extends StatefulWidget {
 class _CollectionAppState extends State<CollectionApp> {
   bool _loading = true;
 
-  String fcmToken;
+  late String fcmToken;
 
   var email;
   var isApprove;
   var roleId;
   var _user;
 
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
-  
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+
   _CollectionAppState(email, isApprove, roleId) {
     this.email = email;
     this.isApprove = isApprove;
     this.roleId = roleId;
   }
-  
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -160,17 +157,11 @@ class _CollectionAppState extends State<CollectionApp> {
 
   _getPref() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (email == null) {
-      email = prefs.getString('email');
-    } 
+    email ??= prefs.getString('email');
 
-    if (roleId == null) {
-      roleId = prefs.getString('role_id');
-    }
+    roleId ??= prefs.getString('role_id');
 
-    if (isApprove == null) {
-      isApprove = prefs.getBool('is_approve');
-    }
+    isApprove ??= prefs.getBool('is_approve');
   }
 
   _getUser(userEmail) async {
@@ -183,22 +174,39 @@ class _CollectionAppState extends State<CollectionApp> {
     return _user;
   }
 
+  @override
   void initState() {
     super.initState();
-    _firebaseMessaging.configure(
-      onMessage: (Map<String, dynamic> message) async {
-        print("onMessage: $message");
-      },
-      onLaunch: (Map<String, dynamic> message) async {
-        print("onLaunch: $message");
-      },
-      onResume: (Map<String, dynamic> message) async {
-        print("onResume: $message");
-      },
-    );
-    _firebaseMessaging.getToken().then((String token) {
+    ///kode awal
+    // _firebaseMessaging.configure(
+    //   onMessage: (Map<String, dynamic> message) async {
+    //     print("onMessage: $message");
+    //   },
+    //   onLaunch: (Map<String, dynamic> message) async {
+    //     print("onLaunch: $message");
+    //   },
+    //   onResume: (Map<String, dynamic> message) async {
+    //     print("onResume: $message");
+    //   },
+    // );
+    // _firebaseMessaging.getToken().then((String token) {
+    //   // assert(token != null);
+    //   fcmToken = token;
+    // });
+    ///tambahan
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("onMessage: $message");
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print("onLaunch: $message");
+    });
+
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    _firebaseMessaging.getToken().then((String? token) {
       // assert(token != null);
-      fcmToken = token;
+      fcmToken = token ?? '';
     });
 
     _getInfo().then((resInfo) {
@@ -229,6 +237,10 @@ class _CollectionAppState extends State<CollectionApp> {
       });
     });
   }
+  ///tambahan
+  Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+    print("onResume: $message");
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -243,7 +255,7 @@ class _CollectionAppState extends State<CollectionApp> {
         Scaffold(
           body: Center(child: CircularProgressIndicator()),
         ) :
-          (email != null && email != 'null') ? 
+          (email != null && email != 'null') ?
             (
               roleId.toString() == "1" ? 
               DashboardAdminPage() : 

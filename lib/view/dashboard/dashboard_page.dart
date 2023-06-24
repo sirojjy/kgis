@@ -1,24 +1,27 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/drawer.dart';
-import 'package:bpjtteknik/helper/main_helper.dart';
-import 'package:bpjtteknik/library/new_version.dart';
-import 'package:bpjtteknik/utils/colors.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/drawer.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/main_helper.dart';
+import 'package:bpjt_k_gis_mobile_master/library/new_version.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/plugin_api.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:latlong/latlong.dart';
+import 'package:latlong2/latlong.dart';
+// import 'package:latlong/latlong.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:package_info/package_info.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+// import 'package:package_info/package_info.dart';
 import 'package:proj4dart/proj4dart.dart' as proj4;
+import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:search_choices/search_choices.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sweetalert/sweetalert.dart';
+// import 'package:sweetalert/sweetalert.dart';
 
 class DashboardPage extends StatefulWidget {
   static const String route = 'custom_crs';
@@ -30,17 +33,17 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   final GlobalKey _mapKey = GlobalKey();
   
-  MapController mapController;
+  late MapController mapController;
 
-  StateSetter _setStateInsideFilter;
+  late StateSetter _setStateInsideFilter;
 
-  int width;
-  int height;
+  late int width;
+  late int height;
   
   bool mapReady = false;
   bool isRuler = false;
 
-  Position _position;
+  late Position _position;
 
   var prefId;
   var prefName;
@@ -54,23 +57,23 @@ class _DashboardPageState extends State<DashboardPage> {
   var prefPosition;
   bool prefIsTrack = false;
 
-  List prefSegments = List();
+  List prefSegments = [];
 
-  List _segmentRegion = List();
-  List _segment = List();
+  List _segmentRegion = [];
+  List _segment = [];
   List<StreamSubscription<dynamic>> _streamSubscriptions = <StreamSubscription<dynamic>>[];
-  List<String> basemapLayers;
+  late List<String> basemapLayers;
 
-  String basemap;
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String basemap;
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
 
-  String _selectedStatus;
-  String _selectedSubStatus;
-  String _selectedRegion;
-  String _selectedSegment;
+  String? _selectedStatus;
+  String? _selectedSubStatus;
+  String? _selectedRegion;
+  String? _selectedSegment;
 
   String _currentLayer = "";
 
@@ -138,9 +141,11 @@ class _DashboardPageState extends State<DashboardPage> {
       setState(() {
         _position = position;
         point = proj4.Point(x: position.latitude, y: position.longitude);
-        if (position.latitude != null && position.longitude != null && mapController.ready) {
-          mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
-        }
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (position.latitude != null && position.longitude != null) {
+            mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
+          }
+        });
       });
   }
 
@@ -199,8 +204,8 @@ class _DashboardPageState extends State<DashboardPage> {
           context: context,
           versionStatus: status,
           dialogTitle: 'Versi Baru Tersedia',
-          dialogText: 'Update Changelog : \n'+status.releaseNotes.replaceAll("<br>", "\n"),
-          allowDismissal: false
+          dialogText: 'Update Changelog : \n${status.releaseNotes.replaceAll("<br>", "\n")}',
+          allowDismissal: false, dismissAction: () { return; }
         );
       }
     }
@@ -240,16 +245,21 @@ class _DashboardPageState extends State<DashboardPage> {
       if (!mounted) return;
       setState(() {
         _position = position;
-        if (position.latitude != null && position.longitude != null && mapController.ready && prefIsTrack) {
-          mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
-        }
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (position.latitude != null && position.longitude != null && prefIsTrack) {
+            mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
+          }
+        });
+        // if (position.latitude != null && position.longitude != null && mapController.ready && prefIsTrack) {
+        //   mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
+        // }
       });
     });
     _streamSubscriptions.add(positionStream);
   }
   
   void _submit() async {
-    await API.getMapService("", "", _selectedRegion, _selectedSegment, version).then((response) {
+    await API.getMapService("", "", _selectedRegion!, _selectedSegment!, version).then((response) {
       if (!mounted) return;
         if (response.length > 0) {
           _currentLayer = response[0]["nama_layer"];
@@ -263,7 +273,7 @@ class _DashboardPageState extends State<DashboardPage> {
   _filterSegment(context) async {
     showModalBottomSheet<void>(
       context: context,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(25),
           topRight: Radius.circular(25)
@@ -275,119 +285,117 @@ class _DashboardPageState extends State<DashboardPage> {
             _setStateInsideFilter = setState;
 
             return
-            Container(
+            SizedBox(
               height: height * 0.42,
               child: Padding(
-                padding: EdgeInsets.all(10.0),
+                padding: const EdgeInsets.all(10.0),
                 child: ListView(
                   children: [
-                    SizedBox(height: 30.0),
+                    const SizedBox(height: 30.0),
                     Container(
                       padding: const EdgeInsets.only(left: 10.0),
-                      child: Text("Silahkan Filter Untuk Menampilkan Peta", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),)
+                      child: const Text("Silahkan Filter Untuk Menampilkan Peta", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),)
                     ),
-                    SizedBox(height: 30.0),
+                    const SizedBox(height: 30.0),
                     Container(
                       padding: const EdgeInsets.only(left: 10.0),
-                      child: Text("Region")
+                      child: const Text("Region")
                     ),
-                    Container(
-                      child: ListTile(
-                        title: DropdownButton(
-                          isExpanded: true,
-                          hint: Row(
-                            children: <Widget>[
-                              Text('Pilih Region'),
-                            ],
-                          ),
-                          items: _segmentRegion.map((item) {
-                            return DropdownMenuItem(
-                              value: item.toString(),
-                              child: FittedBox(
-                                  fit: BoxFit.contain,
-                                  child: Text(item, style: TextStyle(fontSize: 13.0, color: Colors.black),)
-                              )
-                            );
-                          }).toList(),
-                          onChanged: (newVal) {
-                            _listSegment(_selectedStatus, _selectedSubStatus, newVal);
-                            
-                            setState(() {
-                              _selectedSegment = null;
-                              _selectedRegion = newVal;
-                            });
-                          },
-                          value: _selectedRegion,
-                          underline: Container(color:Colors.black, height:0.5),
+                    ListTile(
+                      title: DropdownButton(
+                        isExpanded: true,
+                        hint: const Row(
+                          children: <Widget>[
+                            Text('Pilih Region'),
+                          ],
                         ),
+                        items: _segmentRegion.map((item) {
+                          return DropdownMenuItem(
+                            value: item.toString(),
+                            child: FittedBox(
+                                fit: BoxFit.contain,
+                                child: Text(item, style: const TextStyle(fontSize: 13.0, color: Colors.black),)
+                            )
+                          );
+                        }).toList(),
+                        onChanged: (newVal) {
+                          _listSegment(_selectedStatus!, _selectedSubStatus!, newVal!);
+
+                          setState(() {
+                            _selectedSegment = null;
+                            _selectedRegion = newVal;
+                          });
+                        },
+                        value: _selectedRegion,
+                        underline: Container(color:Colors.black, height:0.5),
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.only(left: 10.0),
-                      child: Text("Ruas")
+                      child: const Text("Ruas")
                     ),
-                    Container(
-                      child: ListTile(
-                        title: SearchChoices.single(
-                          items: _segment.map((item) {
-                            return DropdownMenuItem(
-                              value: item,
-                              child: FittedBox(
-                                  fit: BoxFit.contain,
-                                  child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                              )
+                    ListTile(
+                      title: SearchChoices.single(
+                        items: _segment.map((item) {
+                          return DropdownMenuItem(
+                            value: item,
+                            child: FittedBox(
+                                fit: BoxFit.contain,
+                                child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
+                            )
+                          );
+                        }).toList(),
+                        selectedValueWidgetFn: (item) {
+                          if (_selectedSegment == null) {
+                            return Container(
+                              transform: Matrix4.translationValues(-10,0,0),
+                              alignment: Alignment.centerLeft,
+                              child: const Text("", style: TextStyle(fontSize: 12.0, color: Colors.black),)
                             );
-                          }).toList(),
-                          selectedValueWidgetFn: (item) {
-                            if (_selectedSegment == null) {
-                              return Container(
-                                transform: Matrix4.translationValues(-10,0,0),
-                                alignment: Alignment.centerLeft,
-                                child: Text("", style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                              );
-                            } else {
-                              return Container(
-                                transform: Matrix4.translationValues(-10,0,0),
-                                alignment: Alignment.centerLeft,
-                                child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
-                              );
-                            }
-                          },
-                          hint: Container(
-                            transform: Matrix4.translationValues(-10,0,0),
-                            child: Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
-                          ),
-                          searchHint: "Pilih Ruas",
-                          onChanged: (newVal) {
-                            setState(() {
-                              _selectedSegment = newVal;
-                            });
-                          },
-                          value: _selectedSegment,
-                          isExpanded: true,
-                          displayClearIcon: false,
-                          underline: Container(color:Colors.black, height:0.5),
-                          icon: Container(
-                            transform: Matrix4.translationValues(10,0,0),
-                            child: Icon(Icons.arrow_drop_down)
-                          ),
+                          } else {
+                            return Container(
+                              transform: Matrix4.translationValues(-10,0,0),
+                              alignment: Alignment.centerLeft,
+                              child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
+                            );
+                          }
+                        },
+                        hint: Container(
+                          transform: Matrix4.translationValues(-10,0,0),
+                          child: const Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
+                        ),
+                        searchHint: "Pilih Ruas",
+                        onChanged: (newVal) {
+                          setState(() {
+                            _selectedSegment = newVal;
+                          });
+                        },
+                        value: _selectedSegment,
+                        isExpanded: true,
+                        displayClearIcon: false,
+                        underline: Container(color:Colors.black, height:0.5),
+                        icon: Container(
+                          transform: Matrix4.translationValues(10,0,0),
+                          child: const Icon(Icons.arrow_drop_down)
                         ),
                       ),
                     ),
                     Container(
                       // width: MediaQuery.of(context).size.width * 0.8,
-                      child: RaisedButton(
-                        elevation: 0.8,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0.8,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          padding: const EdgeInsets.all(12),
+                          backgroundColor: colorPrimary,
                         ),
                         onPressed: () {
                           _submit();
                           Navigator.pop(context);
                         },
-                        padding: EdgeInsets.all(12),
-                        color: colorPrimary,
-                        child: Text('SUBMIT', style: TextStyle(color: Colors.white)),
+                        child: const Text('SUBMIT', style: TextStyle(color: Colors.white)),
                       ),
                     ),
                   ],
@@ -401,12 +409,12 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<Widget> _getFeatureInfo(context, proj4.Point coord) async {
-    var north = mapController.bounds.north;
-    var east  = mapController.bounds.east;
-    var south = mapController.bounds.south;
-    var west = mapController.bounds.west;
-    var mapWidth = _mapKey.currentContext.size.width.toInt();
-    var mapHeight = _mapKey.currentContext.size.height.toInt();
+    var north = mapController.bounds?.north;
+    var east  = mapController.bounds?.east;
+    var south = mapController.bounds?.south;
+    var west = mapController.bounds?.west;
+    var mapWidth = _mapKey.currentContext?.size?.width.toInt();
+    var mapHeight = _mapKey.currentContext?.size?.height.toInt();
 
     print("West : $west");
     print("South : $south");
@@ -424,57 +432,74 @@ class _DashboardPageState extends State<DashboardPage> {
       print(response['data']);
       print("======================");
       if (response['data'] != null) {
-        SweetAlert.show(context,
-          title: (response['data']["nama"] == null ? "-" : response['data']["nama"]),
-          subtitle: (response['data']["sta_km"] == null ? "-" : response['data']["sta_km"])
+        Alert(
+            context: context,
+            type: AlertType.info,
+            title: (response['data']["nama"] == null ? "-" : response['data']["nama"]),
+            desc: (response['data']["sta_km"] == null ? "-" : response['data']["sta_km"]),
+            buttons: [
+              DialogButton(
+                child: const Text("OK"),
+                onPressed: () {
+                  return;
+                },
+              )
+            ]
         );
-        // return InfoMarkerPopup(info: response['data']);
-        // showModalBottomSheet<void>(
-        //   context: context,
-        //   shape: RoundedRectangleBorder(
-        //     borderRadius: BorderRadius.only(
-        //       topLeft: Radius.circular(25),
-        //       topRight: Radius.circular(25)
-        //     ),
-        //   ),
-        //   builder: (BuildContext context) {
-        //     return Container(
-        //       height: height * 0.40,
-        //       child: Padding(
-        //         padding: EdgeInsets.all(10.0),
-        //         child: Column(
-        //           crossAxisAlignment: CrossAxisAlignment.start,
-        //           children: [
-        //             SizedBox(height: 25.0),
-        //             Center(
-        //               child: Text("Ruas : ${response['data']['ruas']}", style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-        //             ),
-        //             // Center(
-        //             //   child: Text("STA : ${response['data']['sta'] ?? '-'}", style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-        //             // ),
-        //             response['data']['jenis'] != null ?
-        //               Center(
-        //                 child: Text("Jenis : ${response['data']['jenis']}", style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-        //               )
-        //             :
-        //               Container(),
-        //             SizedBox(height: 25.0),
-        //             Text("Nama : ${response['data']['nama']}", style: TextStyle(fontSize: 15.0)),
-        //             Text("STA : ${response['data']['sta']}", style: TextStyle(fontSize: 15.0)),
-        //             Text("Region : ${response['data']['region']}", style: TextStyle(fontSize: 15.0)),
-        //             Text("BUJT : ${response['data']['bujt']}", style: TextStyle(fontSize: 15.0)),
-        //             Text("Kode : ${response['data']['kodefikasi']}", style: TextStyle(fontSize: 15.0)),
-        //             Text("Status : ${response['data']['status']}", style: TextStyle(fontSize: 15.0)),
-        //             Text("Sub Status : ${response['data']['sub_status']}", style: TextStyle(fontSize: 15.0)),
-        //           ],
-        //         )
-        //       )
-        //     );
-        //   }
-        // );
+        ///>>>
       }
     });
+    return Container();
   }
+  // SweetAlert.show(context,
+  //   title: (response['data']["nama"] == null ? "-" : response['data']["nama"]),
+  //   subtitle: (response['data']["sta_km"] == null ? "-" : response['data']["sta_km"])
+  // );
+
+  // return InfoMarkerPopup(info: response['data']);
+  // showModalBottomSheet<void>(
+  //   context: context,
+  //   shape: RoundedRectangleBorder(
+  //     borderRadius: BorderRadius.only(
+  //       topLeft: Radius.circular(25),
+  //       topRight: Radius.circular(25)
+  //     ),
+  //   ),
+  //   builder: (BuildContext context) {
+  //     return Container(
+  //       height: height * 0.40,
+  //       child: Padding(
+  //         padding: EdgeInsets.all(10.0),
+  //         child: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             SizedBox(height: 25.0),
+  //             Center(
+  //               child: Text("Ruas : ${response['data']['ruas']}", style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+  //             ),
+  //             // Center(
+  //             //   child: Text("STA : ${response['data']['sta'] ?? '-'}", style: TextStyle(fontSize: 15.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+  //             // ),
+  //             response['data']['jenis'] != null ?
+  //               Center(
+  //                 child: Text("Jenis : ${response['data']['jenis']}", style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+  //               )
+  //             :
+  //               Container(),
+  //             SizedBox(height: 25.0),
+  //             Text("Nama : ${response['data']['nama']}", style: TextStyle(fontSize: 15.0)),
+  //             Text("STA : ${response['data']['sta']}", style: TextStyle(fontSize: 15.0)),
+  //             Text("Region : ${response['data']['region']}", style: TextStyle(fontSize: 15.0)),
+  //             Text("BUJT : ${response['data']['bujt']}", style: TextStyle(fontSize: 15.0)),
+  //             Text("Kode : ${response['data']['kodefikasi']}", style: TextStyle(fontSize: 15.0)),
+  //             Text("Status : ${response['data']['status']}", style: TextStyle(fontSize: 15.0)),
+  //             Text("Sub Status : ${response['data']['sub_status']}", style: TextStyle(fontSize: 15.0)),
+  //           ],
+  //         )
+  //       )
+  //     );
+  //   }
+  // );
 
   _getPref() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -486,7 +511,7 @@ class _DashboardPageState extends State<DashboardPage> {
     prefEmail = prefs.getString('email');
     prefRoleId = prefs.getString('role_id');
     prefIsApprove = prefs.getBool('is_approve');
-    prefSegments = prefs.getString('segments') != null ? jsonDecode(prefs.getString('segments')) : null;
+    prefSegments = prefs.getString('segments') != null ? jsonDecode(prefs.getString('segments')!) : null;
     prefMapType = prefs.getString('map_type');
     prefPosition = prefs.getString('position');
     prefIsTrack = prefs.getBool('is_track') ?? false;
@@ -496,8 +521,8 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     width = MediaQuery.of(context).size.width.toInt();
     height = MediaQuery.of(context).size.height.toInt();
-    
-    mapController.onReady.then((value) {
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mapReady) {
         setState(() {
           mapReady = true;
@@ -507,10 +532,21 @@ class _DashboardPageState extends State<DashboardPage> {
         print("MAP READY");
       }
     });
+    
+    // mapController.onReady.then((value) {
+    //   if (!mapReady) {
+    //     setState(() {
+    //       mapReady = true;
+    //       mapController.move(LatLng(_position.latitude, _position.longitude), mapController.zoom);
+    //     });
+    //   } else {
+    //     print("MAP READY");
+    //   }
+    // });
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Beranda'),
+        title: const Text('Beranda'),
         backgroundColor: colorPrimary,
         actions: [
           Visibility(
@@ -527,7 +563,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   Container(
                     margin: const EdgeInsets.only(right: 10.0),
-                    child: Icon(Icons.delete)
+                    child: const Icon(Icons.delete)
                   ),
                 ],
               )
@@ -546,7 +582,7 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 Container(
                   margin: const EdgeInsets.only(right: 10.0),
-                  child: Icon(Icons.architecture),
+                  child: const Icon(Icons.architecture),
                 ),
               ],
             )
@@ -569,7 +605,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   Container(
                     margin: const EdgeInsets.only(right: 10.0),
-                    child: Icon(Icons.layers),
+                    child: const Icon(Icons.layers),
                   ),
                 ],
               )
@@ -579,11 +615,11 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       drawer: DrawerBuild().drw(context, prefCompanyField),
       body: Padding(
-        padding: EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(8.0),
         child: _position == null ?
         Center(
           child: Container(
-            child: Column(
+            child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircularProgressIndicator(),
@@ -601,40 +637,30 @@ class _DashboardPageState extends State<DashboardPage> {
                 key: _mapKey,
                 mapController: mapController,
                 options: MapOptions(
-                  crs: Epsg4326(),
+                  crs: const Epsg4326(),
                   center: LatLng(point.x, point.y),
                   zoom: 12,
-                  onTap: (p) => setState(() {
-                    point = proj4.Point(x: p.latitude, y: p.longitude);
+                  onTap: (tapPosition, latLng) => setState(() {
+                    point = proj4.Point(x: latLng.latitude, y: latLng.longitude);
                     if (isRuler) {
-                      distancePoint.add(LatLng(p.latitude, p.longitude));
+                      distancePoint.add(LatLng(latLng.latitude, latLng.longitude));
                       distanceMarker.add(Marker(
                         width: 80.0,
                         height: 80.0,
-                        point: LatLng(p.latitude, p.longitude),
+                        point: LatLng(latLng.latitude, latLng.longitude),
                         builder: (ctx) =>
-                        Container(
-                          child: Icon(Icons.location_on_outlined, color: Colors.red,),
-                        ),
+                        const Icon(Icons.location_on_outlined, color: Colors.red,),
                       ));
-
                       _calculateDistance();
                     } else {
                       _getFeatureInfo(context, point);
                     }
                   }),
                 ),
-                layers: [
-                  // TileLayerOptions(
-                  //   wmsOptions: WMSTileLayerOptions(
-                  //     crs: Epsg4326(),
-                  //     baseUrl: 'https://tiles.maps.eox.at/?',
-                  //     layers: ['s2cloudless-2019', 'overlay_base'],
-                  //   ),
-                  // ),
-                  TileLayerOptions(
+                children: [
+                  TileLayer(
                     wmsOptions: WMSTileLayerOptions(
-                      crs: Epsg4326(),
+                      crs: const Epsg4326(),
                       baseUrl: basemap,
                       layers: basemapLayers
                       // 'https://tiles.maps.eox.at/?'
@@ -642,18 +668,17 @@ class _DashboardPageState extends State<DashboardPage> {
                       // s2cloudless-2020
                     ),
                   ),
-
-                  TileLayerOptions(
+                  TileLayer(
                     backgroundColor: Colors.transparent,
                     wmsOptions: WMSTileLayerOptions(
-                      crs: Epsg4326(),
+                      crs: const Epsg4326(),
                       transparent: true,
                       format: 'image/png',
                       baseUrl: 'http://103.6.53.254:13480/geoserver/bpjt/wms?',
                       layers: [_currentLayer],
                     ),
                   ),
-                  MarkerLayerOptions(
+                  MarkerLayer(
                     markers: [
                       Marker(
                         width: 80.0,
@@ -661,15 +686,15 @@ class _DashboardPageState extends State<DashboardPage> {
                         point: LatLng(_position.latitude, _position.longitude),
                         builder: (ctx) =>
                         Container(
-                          child: Icon(MdiIcons.checkboxBlankCircle, color: Colors.lightBlue, size: 15.0),
+                          child: const Icon(MdiIcons.checkboxBlankCircle, color: Colors.lightBlue, size: 15.0),
                         ),
                       ),
                     ],
                   ),
-                  MarkerLayerOptions(
+                  MarkerLayer(
                     markers: distanceMarker,
                   ),
-                  PolylineLayerOptions(
+                  PolylineLayer(
                     polylines: distanceLine
                   )
                 ],
@@ -678,7 +703,7 @@ class _DashboardPageState extends State<DashboardPage> {
             Visibility(
               visible: isRuler,
               child: Container(
-                child: Text('Jarak : ${distanceInMeter.ceil().toString()} m', style: TextStyle(fontSize: 21.0),),
+                child: Text('Jarak : ${distanceInMeter.ceil().toString()} m', style: const TextStyle(fontSize: 21.0),),
               )
             )
           ],
@@ -704,26 +729,26 @@ class _DashboardPageState extends State<DashboardPage> {
     Widget _getFAB() {
       return SpeedDial(
         animatedIcon: AnimatedIcons.menu_close,
-        animatedIconTheme: IconThemeData(size: 22),
+        animatedIconTheme: const IconThemeData(size: 22),
         backgroundColor: Colors.white,
         visible: true,
         curve: Curves.bounceIn,
         children: [
           SpeedDialChild(
-            child: Icon(Icons.my_location),
+            child: const Icon(Icons.my_location),
             backgroundColor: Colors.white,
             onTap: () async { 
               mapController.move(LatLng(_position.latitude, _position.longitude), mapController.zoom);
             },
             label: 'Posisi Saya',
-            labelStyle: TextStyle(
+            labelStyle: const TextStyle(
                 fontWeight: FontWeight.w500,
                 color: Colors.white,
                 fontSize: 16.0),
             labelBackgroundColor: colorPrimary
           ),
           SpeedDialChild(
-            child: Icon(Icons.map_outlined),
+            child: const Icon(Icons.map_outlined),
             backgroundColor: Colors.white,
             onTap: () async { 
               SharedPreferences preferences = await SharedPreferences.getInstance();
@@ -731,14 +756,14 @@ class _DashboardPageState extends State<DashboardPage> {
               Phoenix.rebirth(context);
             },
             label: 'Google Basemap',
-            labelStyle: TextStyle(
+            labelStyle: const TextStyle(
                 fontWeight: FontWeight.w500,
                 color: Colors.white,
                 fontSize: 16.0),
             labelBackgroundColor: colorPrimary
           ),
           SpeedDialChild(
-            child: Icon(Icons.map_outlined),
+            child: const Icon(Icons.map_outlined),
             backgroundColor: Colors.white,
             onTap: () async { 
               SharedPreferences preferences = await SharedPreferences.getInstance();
@@ -746,7 +771,7 @@ class _DashboardPageState extends State<DashboardPage> {
               Phoenix.rebirth(context);
             },
             label: 'OSM Basemap',
-            labelStyle: TextStyle(
+            labelStyle: const TextStyle(
                 fontWeight: FontWeight.w500,
                 color: Colors.white,
                 fontSize: 16.0),
@@ -766,7 +791,7 @@ class _DashboardPageState extends State<DashboardPage> {
               Phoenix.rebirth(context);
             },
             label: prefIsTrack ? 'Off Tracking' : 'On Tracking',
-            labelStyle: TextStyle(
+            labelStyle: const TextStyle(
                 fontWeight: FontWeight.w500,
                 color: Colors.white,
                 fontSize: 16.0),
@@ -778,7 +803,7 @@ class _DashboardPageState extends State<DashboardPage> {
 }
 
 class InfoMarkerPopup extends StatelessWidget {
-  const InfoMarkerPopup({Key key, this.info}) : super(key: key);
+  const InfoMarkerPopup({required Key key, this.info}) : super(key: key);
   // final Info info;
   final dynamic info;
 
@@ -792,7 +817,7 @@ class InfoMarkerPopup extends StatelessWidget {
         ),
         color: Colors.white.withOpacity(0.8),
         child: Container(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[

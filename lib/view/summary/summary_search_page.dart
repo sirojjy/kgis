@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:bpjtteknik/utils/colors.dart';
-import 'package:bpjtteknik/view/summary/summary_page.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/colors.dart';
+import 'package:bpjt_k_gis_mobile_master/view/summary/summary_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:intl/intl.dart';
@@ -13,9 +13,9 @@ class SummarySearchPage extends StatefulWidget {
 }
 
 class SummarySearchPageState extends State<SummarySearchPage> {
-  String _dateFrom;
-  String _dateTo;
-  List prefSegments = List();
+  late String _dateFrom;
+  late String _dateTo;
+  List prefSegments = [];
 
   var prefId;
   var prefName;
@@ -38,7 +38,7 @@ class SummarySearchPageState extends State<SummarySearchPage> {
     prefRoleId = prefs.getString('role_id');
     prefIsApprove = prefs.getBool('is_approve');
     prefSegment = prefs.getString('segment');
-    prefSegments = jsonDecode(prefs.getString('segments'));
+    prefSegments = jsonDecode(prefs.getString('segments')!);
   }
   
   @override
@@ -55,7 +55,7 @@ class SummarySearchPageState extends State<SummarySearchPage> {
       appBar: AppBar(
         elevation: 0.1,
         backgroundColor: colorPrimary,
-        title: Text("Pencarian"),
+        title: const Text("Pencarian"),
         centerTitle: true,
       ),
       backgroundColor: Colors.white,
@@ -67,7 +67,7 @@ class SummarySearchPageState extends State<SummarySearchPage> {
             Container(
               margin: const EdgeInsets.only(left: 15.0, right: 15.0, top: 5.0),
               child: FormBuilderDateTimePicker(
-                attribute: 'date',
+                name: 'date',
                 onChanged: (val) => {
                   setState(() {
                     _dateFrom = val.toString().split(' ')[0];
@@ -84,7 +84,7 @@ class SummarySearchPageState extends State<SummarySearchPage> {
             Container(
               margin: const EdgeInsets.only(left: 15.0, right: 15.0, top: 5.0),
               child: FormBuilderDateTimePicker(
-                attribute: 'date',
+                name: 'date',
                 onChanged: (val) => {
                   setState(() {
                     _dateTo = val.toString().split(' ')[0];
@@ -98,15 +98,17 @@ class SummarySearchPageState extends State<SummarySearchPage> {
                 format: DateFormat('yyyy-MM-dd'),
               ),
             ),
-            FlatButton(
+            ElevatedButton(
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => new SummaryPage(
+                Navigator.push(context, MaterialPageRoute(builder: (context) => SummaryPage(
                   dateFrom: _dateFrom,
                   dateTo: _dateTo
                 )));
               },
-              color: colorPrimary,
-              child: Text("Cari", style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorPrimary,
+              ),
+              child: const Text("Cari", style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

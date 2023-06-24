@@ -43,6 +43,7 @@ class Utils {
       // iOS-specific code
       return false;
     }
+    return false;
   }
 
   // static void syncPresenceTrackings() async {
@@ -75,7 +76,7 @@ class Utils {
       ),
 
       actions: <Widget>[
-        FlatButton(
+        TextButton (
             onPressed: onPressed,
             child: Text(
               "OK",
@@ -124,13 +125,13 @@ class Utils {
         ),
       ),
       actions: <Widget>[
-        FlatButton(
+        TextButton (
             onPressed: onPressed,
             child: Text(
               "OK",
               style: TextStyle(color: Colors.black87),
             )),
-        FlatButton(
+        TextButton (
             onPressed: () => Navigator.pop(context),
             child: Text(
               "Cancel",
@@ -175,8 +176,8 @@ class Utils {
     Duration oneDay = new Duration(days: 1);
     Duration twoDay = new Duration(days: 2);
     // Duration oneWeek = new Duration(days: 7);
-    String month;
-    String day;
+    String? month;
+    String? day;
     switch (tm.month) {
       case 1:
         month = "Januari";

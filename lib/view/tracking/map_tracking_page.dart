@@ -1,20 +1,23 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/drawer.dart';
-import 'package:bpjtteknik/helper/main_helper.dart';
-import 'package:bpjtteknik/utils/colors.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/drawer.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/main_helper.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/plugin_api.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:latlong/latlong.dart';
-import 'package:package_info/package_info.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:proj4dart/proj4dart.dart' as proj4;
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart' as clstr;
 import 'package:search_choices/search_choices.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:latlong/latlong.dart';
+// import 'package:package_info/package_info.dart';
 
 class MapTrackingPage extends StatefulWidget {
   final long;
@@ -24,7 +27,7 @@ class MapTrackingPage extends StatefulWidget {
     this.long,
     this.lat
   });
-  
+
   static const String route = 'custom_crs';
 
   @override
@@ -35,16 +38,16 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
   final GlobalKey _mapKey = GlobalKey();
   final clstr.PopupController _popupController = clstr.PopupController();
 
-  MapController mapController;
+  late MapController mapController;
 
-  StateSetter _setStateInsideFilter;
+  late StateSetter _setStateInsideFilter;
 
   bool mapReady = false;
 
-  int width;
-  int height;
+  late int width;
+  late int height;
 
-  Position _position;
+  late Position _position;
 
   var prefId;
   var prefName;
@@ -54,29 +57,29 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
   var prefEmail;
   var prefRoleId;
   var prefIsApprove;
-  List prefSegments = List();
+  List prefSegments = [];
   var prefMapType;
   var prefPosition;
 
   var _trackingProblems = [];
 
   List tappedPoints = [];
-  List _segmentRegion = List();
-  List _segment = List();
+  List _segmentRegion = [];
+  List _segment = [];
   List<StreamSubscription<dynamic>> _streamSubscriptions = <StreamSubscription<dynamic>>[];
 
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
 
-  String _selectedStatus;
-  String _selectedSubStatus;
-  String _selectedRegion;
-  String _selectedSegment;
+  String? _selectedStatus;
+  String? _selectedSubStatus;
+  String? _selectedRegion;
+  String? _selectedSegment;
 
   String _currentLayer = "";
-  
+
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     setState(() {
@@ -86,11 +89,11 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
       buildNumber = packageInfo.buildNumber;
     });
   }
-  
+
   proj4.Point point = proj4.Point(x: -7.39139558847656, y: 111.07967376708984);
 
   Future<void> _getAllTrackingProblems() async {
-    await API.getAllTrackingProblems("", _selectedSegment, "", "", "", version).then((response) {
+    await API.getAllTrackingProblems("", _selectedSegment!, "", "", "", version).then((response) {
       if (!mounted) return;
       setState(() {
         if (response != null) {
@@ -113,9 +116,15 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
       setState(() {
         _position = position;
         point = proj4.Point(x: position.latitude, y: position.longitude);
-        if (position.latitude != null && position.longitude != null && mapController.ready) {
-          mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
-        }
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (position.latitude != null && position.longitude != null) {
+            mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
+          }
+        });
+        ///sebelumnya
+        // if (position.latitude != null && position.longitude != null && mapController.ready) {
+        //   mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
+        // }
       });
   }
 
@@ -147,7 +156,7 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
 
   _listSegment(String status, String subStatus, String region) async {
     await API.getSegment(status, subStatus, region, "true", version).then((response) {
-      if (!mounted) return;      
+      if (!mounted) return;
       _setStateInsideFilter(() {
         if (prefCompanyField == "PMI") {
           _segment.clear();
@@ -169,16 +178,22 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
       if (!mounted) return;
       setState(() {
         _position = position;
-        if (position.latitude != null && position.longitude != null && mapController.ready) {
-          mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
-        }
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (position.latitude != null && position.longitude != null) {
+            mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
+          }
+        });
+        ///sebelumnya
+        // if (position.latitude != null && position.longitude != null && mapController.ready) {
+        //   mapController.move(LatLng(position.latitude, position.longitude), mapController.zoom);
+        // }
       });
     });
     _streamSubscriptions.add(positionStream);
   }
-  
+
   void _submit() async {
-    await API.getMapService("", "", _selectedRegion, _selectedSegment, version).then((response) {
+    await API.getMapService("", "", _selectedRegion!, _selectedSegment!, version).then((response) {
       if (!mounted) return;
         if (response.length > 0) {
           _currentLayer = response[0]["nama_layer"];
@@ -192,7 +207,7 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
   _filterSegment(context) async {
     showModalBottomSheet<void>(
       context: context,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(25),
           topRight: Radius.circular(25)
@@ -204,27 +219,27 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
             _setStateInsideFilter = setState;
 
             return
-            Container(
+            SizedBox(
               height: height * 0.42,
               child: Padding(
-                padding: EdgeInsets.all(10.0),
+                padding: const EdgeInsets.all(10.0),
                 child: ListView(
                   children: [
-                    SizedBox(height: 30.0),
+                    const SizedBox(height: 30.0),
                     Container(
                       padding: const EdgeInsets.only(left: 10.0),
-                      child: Text("Silahkan Filter Untuk Menampilkan Peta", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),)
+                      child: const Text("Silahkan Filter Untuk Menampilkan Peta", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),)
                     ),
-                    SizedBox(height: 30.0),
+                    const SizedBox(height: 30.0),
                     Container(
                       padding: const EdgeInsets.only(left: 10.0),
-                      child: Text("Region")
+                      child: const Text("Region")
                     ),
                     Container(
                       child: ListTile(
                         title: DropdownButton(
                           isExpanded: true,
-                          hint: Row(
+                          hint: const Row(
                             children: <Widget>[
                               Text('Pilih Region'),
                             ],
@@ -234,13 +249,13 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
                               value: item.toString(),
                               child: FittedBox(
                                   fit: BoxFit.contain,
-                                  child: Text(item, style: TextStyle(fontSize: 13.0, color: Colors.black),)
+                                  child: Text(item, style: const TextStyle(fontSize: 13.0, color: Colors.black),)
                               )
                             );
                           }).toList(),
                           onChanged: (newVal) {
-                            _listSegment(_selectedStatus, _selectedSubStatus, newVal);
-                            
+                            _listSegment(_selectedStatus!, _selectedSubStatus!, newVal!);
+
                             setState(() {
                               _selectedSegment = null;
                               _selectedRegion = newVal;
@@ -253,7 +268,7 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
                     ),
                     Container(
                       padding: const EdgeInsets.only(left: 10.0),
-                      child: Text("Ruas")
+                      child: const Text("Ruas")
                     ),
                     Container(
                       child: ListTile(
@@ -263,7 +278,7 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
                               value: item,
                               child: FittedBox(
                                   fit: BoxFit.contain,
-                                  child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
+                                  child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
                               )
                             );
                           }).toList(),
@@ -272,19 +287,19 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
                               return Container(
                                 transform: Matrix4.translationValues(-10,0,0),
                                 alignment: Alignment.centerLeft,
-                                child: Text("", style: TextStyle(fontSize: 12.0, color: Colors.black),)
+                                child: const Text("", style: TextStyle(fontSize: 12.0, color: Colors.black),)
                               );
                             } else {
                               return Container(
                                 transform: Matrix4.translationValues(-10,0,0),
                                 alignment: Alignment.centerLeft,
-                                child: Text(item, style: TextStyle(fontSize: 12.0, color: Colors.black),)
+                                child: Text(item, style: const TextStyle(fontSize: 12.0, color: Colors.black),)
                               );
                             }
                           },
                           hint: Container(
                             transform: Matrix4.translationValues(-10,0,0),
-                            child: Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
+                            child: const Text("Pilih Ruas", style: TextStyle(color: Colors.black),)
                           ),
                           searchHint: "Pilih Ruas",
                           onChanged: (newVal) {
@@ -298,25 +313,27 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
                           underline: Container(color:Colors.black, height:0.5),
                           icon: Container(
                             transform: Matrix4.translationValues(10,0,0),
-                            child: Icon(Icons.arrow_drop_down)
+                            child: const Icon(Icons.arrow_drop_down)
                           ),
                         ),
                       ),
                     ),
                     Container(
                       // width: MediaQuery.of(context).size.width * 0.8,
-                      child: RaisedButton(
-                        elevation: 0.8,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0.8,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          padding: const EdgeInsets.all(12),
+                          backgroundColor: colorPrimary,
                         ),
                         onPressed: () {
                           _submit();
                           Navigator.pop(context);
                         },
-                        padding: EdgeInsets.all(12),
-                        color: colorPrimary,
-                        child: Text('SUBMIT', style: TextStyle(color: Colors.white)),
+                        child: const Text('SUBMIT', style: TextStyle(color: Colors.white)),
                       ),
                     ),
                   ],
@@ -330,12 +347,12 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
   }
 
   _getFeatureInfo(context, proj4.Point coord) async {
-    var north = mapController.bounds.north;
-    var east  = mapController.bounds.east;
-    var south = mapController.bounds.south;
-    var west = mapController.bounds.west;
-    var mapWidth = _mapKey.currentContext.size.width.toInt();
-    var mapHeight = _mapKey.currentContext.size.height.toInt();
+    var north = mapController.bounds?.north;
+    var east  = mapController.bounds?.east;
+    var south = mapController.bounds?.south;
+    var west = mapController.bounds?.west;
+    var mapWidth = _mapKey.currentContext?.size?.width.toInt();
+    var mapHeight = _mapKey.currentContext?.size?.height.toInt();
 
     print("West : $west");
     print("South : $south");
@@ -345,9 +362,9 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
     print("Height : $mapHeight");
     print("Coord X : ${coord.y}");
     print("Coord Y : ${coord.x}");
-    print("http://103.6.53.254:13480/kgis/index.php/wms/info/${_currentLayer}/$west~$south~$east~$north/$mapWidth/$mapHeight/${coord.y}/${coord.x}");
-    
-    await API.getFeatureInfo("http://103.6.53.254:13480/kgis/index.php/wms/info/${_currentLayer}/$west~$south~$east~$north/$mapWidth/$mapHeight/${coord.y}/${coord.x}").then((response) {
+    print("http://103.6.53.254:13480/kgis/index.php/wms/info/$_currentLayer/$west~$south~$east~$north/$mapWidth/$mapHeight/${coord.y}/${coord.x}");
+
+    await API.getFeatureInfo("http://103.6.53.254:13480/kgis/index.php/wms/info/$_currentLayer/$west~$south~$east~$north/$mapWidth/$mapHeight/${coord.y}/${coord.x}").then((response) {
       if (!mounted) return;
       print("Response From Server :");
       print(response['data']);
@@ -355,38 +372,38 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
       if (response['data'] != null) {
         showModalBottomSheet<void>(
           context: context,
-          shape: RoundedRectangleBorder(
+          shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(25),
               topRight: Radius.circular(25)
             ),
           ),
           builder: (BuildContext context) {
-            return Container(
+            return SizedBox(
               height: height * 0.40,
               child: Padding(
-                padding: EdgeInsets.all(10.0),
+                padding: const EdgeInsets.all(10.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 25.0),
+                    const SizedBox(height: 25.0),
                     Center(
-                      child: Text("Ruas : ${response['data']['ruas']}", style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                      child: Text("Ruas : ${response['data']['ruas']}", style: const TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                     ),
                     response['data']['jenis'] != null ?
                       Center(
-                        child: Text("Jenis : ${response['data']['jenis']}", style: TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                        child: Text("Jenis : ${response['data']['jenis']}", style: const TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                       )
                     :
                       Container(),
-                    SizedBox(height: 25.0),
-                    Text("Nama : ${response['data']['nama']}", style: TextStyle(fontSize: 15.0)),
-                    Text("STA : ${response['data']['sta']}", style: TextStyle(fontSize: 15.0)),
-                    Text("Region : ${response['data']['region']}", style: TextStyle(fontSize: 15.0)),
-                    Text("BUJT : ${response['data']['bujt']}", style: TextStyle(fontSize: 15.0)),
-                    Text("Kode : ${response['data']['kodefikasi']}", style: TextStyle(fontSize: 15.0)),
-                    Text("Status : ${response['data']['status']}", style: TextStyle(fontSize: 15.0)),
-                    Text("Sub Status : ${response['data']['sub_status']}", style: TextStyle(fontSize: 15.0)),
+                    const SizedBox(height: 25.0),
+                    Text("Nama : ${response['data']['nama']}", style: const TextStyle(fontSize: 15.0)),
+                    Text("STA : ${response['data']['sta']}", style: const TextStyle(fontSize: 15.0)),
+                    Text("Region : ${response['data']['region']}", style: const TextStyle(fontSize: 15.0)),
+                    Text("BUJT : ${response['data']['bujt']}", style: const TextStyle(fontSize: 15.0)),
+                    Text("Kode : ${response['data']['kodefikasi']}", style: const TextStyle(fontSize: 15.0)),
+                    Text("Status : ${response['data']['status']}", style: const TextStyle(fontSize: 15.0)),
+                    Text("Sub Status : ${response['data']['sub_status']}", style: const TextStyle(fontSize: 15.0)),
                   ],
                 )
               )
@@ -407,17 +424,18 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
     prefEmail = prefs.getString('email');
     prefRoleId = prefs.getString('role_id');
     prefIsApprove = prefs.getBool('is_approve');
-    prefSegments = prefs.getString('segments') != null ? jsonDecode(prefs.getString('segments')) : null;
+    prefSegments = prefs.getString('segments') != null ? jsonDecode(prefs.getString('segments')!) : null;
     prefMapType = prefs.getString('map_type');
     prefPosition = prefs.getString('position');
   }
-  
+
   @override
   Widget build(BuildContext context) {
     width = MediaQuery.of(context).size.width.toInt();
     height = MediaQuery.of(context).size.height.toInt();
-    
-    mapController.onReady.then((value) {
+
+    // mapController.onReady.then((value) {
+    WidgetsBinding.instance.addPostFrameCallback((_){
       if (!mapReady) {
         setState(() {
           mapReady = true;
@@ -427,13 +445,12 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
         print("MAP READY");
       }
     });
-    
+
     var markers = tappedPoints.map((latlng) {
       return ProblemMarker(
         problem: Problem(
-          name: latlng["problem_details"] == null ? '-' : latlng["problem_details"],
-          imagePath:
-              'http://103.6.53.254:13480/bpjt-teknik/public'+latlng["photo"],
+          name: latlng["problem_details"] ?? '-',
+          imagePath: "http://103.6.53.254:13480/bpjt-teknik/public'${latlng['photo']}",
           lat: latlng["lat"],
           long: latlng["long"],
           date: latlng["date"]
@@ -443,7 +460,7 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Map Tracking'),
+        title: const Text('Map Tracking'),
         backgroundColor: colorPrimary,
         actions: [
           Visibility(
@@ -464,7 +481,7 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
                 children: [
                   Container(
                     margin: const EdgeInsets.only(right: 10.0),
-                    child: Icon(Icons.layers),
+                    child: const Icon(Icons.layers),
                   ),
                 ],
               )
@@ -474,18 +491,16 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
       ),
       drawer: DrawerBuild().drw(context, prefCompanyField),
       body: Padding(
-        padding: EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(8.0),
         child: _position == null ?
         Center(
-          child: Container(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 5.0),
-                Text('Memuat Peta, Harap Menunggu...', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 11.0))
-              ],
-            )
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 5.0),
+              Text('Memuat Peta, Harap Menunggu...', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 11.0))
+            ],
           ),
         )
         :
@@ -496,92 +511,122 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
                 key: _mapKey,
                 mapController: mapController,
                 options: MapOptions(
-                  crs: Epsg4326(),
+                  crs: const Epsg4326(),
                   center: LatLng(point.x, point.y),
                   zoom: 12,
-                  plugins: [
-                    // MyCustomPlugin(),
-                    // ScaleLayerPlugin(),
-                    clstr.MarkerClusterPlugin(),
-                    // ZoomButtonsPlugin(),
-                  ],
-                  onTap: (p) => setState(() {
-                    _popupController.hidePopup();
-                    point = proj4.Point(x: p.latitude, y: p.longitude);
-                    _getFeatureInfo(context, point);
-                  }),
+                  // plugins: [
+                  //   clstr.MarkerClusterLayerOptions(),
+                  // ],
+                  onTap: (tapPosition, LatLng latLng) {
+                    setState(() {
+                      _popupController.hideAllPopups();
+                      point = proj4.Point(x: latLng.latitude, y: latLng.longitude);
+                      _getFeatureInfo(context, point);
+                    });
+                  },
+                  ///sebelumya
+                  // onTap: (p) => setState(() {
+                  //   _popupController.hidePopup();
+                  //   point = proj4.Point(x: p.latitude, y: p.longitude);
+                  //   _getFeatureInfo(context, point);
+                  // }),
                 ),
-                layers: [
-                  // TileLayerOptions(
-                  //   wmsOptions: WMSTileLayerOptions(
-                  //     crs: Epsg4326(),
-                  //     baseUrl: 'https://tiles.maps.eox.at/?',
-                  //     layers: ['s2cloudless-2019', 'overlay_base'],
-                  //   ),
-                  // ),
-                  TileLayerOptions(
+                children: [
+                  TileLayer(
                     wmsOptions: WMSTileLayerOptions(
-                      crs: Epsg4326(),
+                      crs: const Epsg4326(),
                       baseUrl: 'https://tiles.maps.eox.at/?',
                       layers: ['osm'],
                     ),
                   ),
 
-                  TileLayerOptions(
+                  TileLayer(
                     backgroundColor: Colors.transparent,
                     wmsOptions: WMSTileLayerOptions(
-                      crs: Epsg4326(),
+                      crs: const Epsg4326(),
                       transparent: true,
                       format: 'image/png',
                       baseUrl: 'http://103.6.53.254:13480/geoserver/bpjt/wms?',
                       layers: [_currentLayer],
                     ),
                   ),
-                  MarkerLayerOptions(
+                  MarkerLayer(
                     markers: [
                       Marker(
                         width: 80.0,
                         height: 80.0,
                         point: LatLng(_position.latitude, _position.longitude),
                         builder: (ctx) =>
-                        Container(
-                          child: Icon(Icons.my_location, color: Colors.red,),
-                        ),
+                        const Icon(Icons.my_location, color: Colors.red,),
                       ),
                     ],
                   ),
 
-                  clstr.MarkerClusterLayerOptions(
-                    maxClusterRadius: 120,
-                    disableClusteringAtZoom: 9,
-                    size: Size(40, 40),
-                    anchor: AnchorPos.align(AnchorAlign.center),
-                    fitBoundsOptions: FitBoundsOptions(
-                      padding: EdgeInsets.all(50),
-                    ),
-                    markers: markers,
-                    polygonOptions: clstr.PolygonOptions(
-                      borderColor: Colors.blueAccent,
-                      color: Colors.black12,
-                      borderStrokeWidth: 3
-                    ),
-                    popupOptions: clstr.PopupOptions(
-                      popupSnap: clstr.PopupSnap.top,
-                      popupController: _popupController,
-                      popupBuilder: (_, Marker marker) {
-                        if (marker is ProblemMarker) {
-                          return ProblemMarkerPopup(problem: marker.problem);
-                        }
-                        return Card(child: const Text('Not a monument'));
+                  MarkerClusterLayerWidget(
+                    options: MarkerClusterLayerOptions(
+                      maxClusterRadius: 120,
+                      disableClusteringAtZoom: 9,
+                      size: const Size(40, 40),
+                      anchor: AnchorPos.align(AnchorAlign.center),
+                      fitBoundsOptions: const FitBoundsOptions(
+                        padding: EdgeInsets.all(50),
+                      ),
+                      markers: markers,
+                      polygonOptions: const PolygonOptions(
+                          borderColor: Colors.blueAccent,
+                          color: Colors.black12,
+                          borderStrokeWidth: 3),
+                      popupOptions: PopupOptions(
+                        popupSnap: PopupSnap.mapTop,
+                        popupController: _popupController,
+                        popupBuilder: (_, Marker marker) {
+                          if (marker is ProblemMarker) {
+                            return ProblemMarkerPopup(problem: marker.problem);
+                          }
+                          return const Card(child: Text('Not a monument'));
+                        },
+                        popupState: PopupState(),
+                      ),
+                      builder: (context, markers) {
+                        return FloatingActionButton(
+                          child: Text(markers.length.toString()),
+                          onPressed: null,
+                        );
                       },
                     ),
-                    builder: (context, markers) {
-                      return FloatingActionButton(
-                        child: Text(markers.length.toString()),
-                        onPressed: null,
-                      );
-                    },
-                  ),
+                  )
+                  ///sebelumnya
+                  // clstr.MarkerClusterLayerOptions(
+                  //   maxClusterRadius: 120,
+                  //   disableClusteringAtZoom: 9,
+                  //   size: const Size(40, 40),
+                  //   anchor: AnchorPos.align(AnchorAlign.center),
+                  //   fitBoundsOptions: const FitBoundsOptions(
+                  //     padding: EdgeInsets.all(50),
+                  //   ),
+                  //   markers: markers,
+                  //   polygonOptions: const clstr.PolygonOptions(
+                  //     borderColor: Colors.blueAccent,
+                  //     color: Colors.black12,
+                  //     borderStrokeWidth: 3
+                  //   ),
+                  //   popupOptions: clstr.PopupOptions(
+                  //     popupSnap: clstr.PopupSnap.top,
+                  //     popupController: _popupController,
+                  //     popupBuilder: (_, Marker marker) {
+                  //       if (marker is ProblemMarker) {
+                  //         return ProblemMarkerPopup(problem: marker.problem);
+                  //       }
+                  //       return const Card(child: Text('Not a monument'));
+                  //     },
+                  //   ),
+                  //   builder: (context, markers) {
+                  //     return FloatingActionButton(
+                  //       child: Text(markers.length.toString()),
+                  //       onPressed: null,
+                  //     );
+                  //   },
+                  // ),
                 ],
               )
             ),
@@ -590,7 +635,7 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: "btn2",
-        child: Icon(
+        child: const Icon(
           Icons.gps_fixed,
           color: Colors.white,
         ),
@@ -608,36 +653,36 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
 class Problem {
   static const double size = 30;
 
-  Problem({this.name, this.date, this.imagePath, this.problem, this.lat, this.long});
+  Problem({required this.name, required this.date, required this.imagePath, this.problem, required this.lat, required this.long});
 
   final String name;
   final String date;
   final String imagePath;
-  final String problem;
+  String? problem;
   final double lat;
   final double long;
 }
 
 class ProblemMarker extends Marker {
-  ProblemMarker({@required this.problem})
+  ProblemMarker({required this.problem})
       : super(
           anchorPos: AnchorPos.align(AnchorAlign.top),
           height: Problem.size,
           width: Problem.size,
           point: LatLng(problem.lat, problem.long),
-          builder: (BuildContext ctx) => Icon(Icons.location_on, color: Colors.red,),
+          builder: (BuildContext ctx) => const Icon(Icons.location_on, color: Colors.red,),
         );
 
   final Problem problem;
 }
 
 class ProblemMarkerPopup extends StatelessWidget {
-  const ProblemMarkerPopup({Key key, this.problem}) : super(key: key);
+  const ProblemMarkerPopup({super.key,  required this.problem}) ;
   final Problem problem;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: 200,
       child: Card(
         shape: RoundedRectangleBorder(
@@ -645,7 +690,7 @@ class ProblemMarkerPopup extends StatelessWidget {
         ),
         color: Colors.white.withOpacity(0.8),
         child: Container(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[

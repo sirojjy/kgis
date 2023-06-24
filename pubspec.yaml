@@ -84,10 +84,11 @@ dependencies:
 #  flutter_speed_dial: 2.1.1
   flutter_speed_dial: ^7.0.0
   flutter_map: ^3.1.0
-  flutter_map_marker_cluster: ^1.1.0
+  flutter_map_marker_cluster: any
 #  flutter_map_arcgis: ^2.0.0 belum ada gantinya
   bubble_tab_indicator: ^0.1.4
   flutter_map_tappable_polyline: ^4.0.0+1
+  latlong2: ^0.8.1
 
 #  carousel_pro: ^1.0.0
   carousel_pro_nullsafety: ^2.0.0
@@ -96,7 +97,8 @@ dependencies:
   flutter_phoenix: ^1.1.1
   bordered_text: ^2.0.0
   fl_chart: ^0.62.0
-  firebase_messaging: ^14.6.1
+  firebase_messaging: ^14.3.0
+  firebase_core: ^2.14.0
   share_plus: ^7.0.1
   gallery_saver: ^2.3.2
   geocoding: ^2.1.0
@@ -107,7 +109,14 @@ dependencies:
   html: ^0.15.3
   # awesome_notifications: ^0.0.5+5
   # workmanager: ^0.3.0
-  flutter_native_timezone: ^2.0.0
+#  flutter_native_timezone: ^2.0.0
+  flutter_native_timezone_updated_gradle: ^2.0.3
+  pdf_viewer_plugin: ^2.0.1
+  modal_progress_hud_nsn: ^0.4.0
+  easy_pdf_viewer: ^1.0.6
+  pinch_zoom: ^1.0.0
+  rflutter_alert: ^2.0.7
+
 
 dev_dependencies:
   flutter_test:

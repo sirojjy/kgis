@@ -1,19 +1,21 @@
-import 'package:bpjtteknik/conn/API.dart';
-import 'package:bpjtteknik/helper/db.dart';
-import 'package:bpjtteknik/helper/main_helper.dart';
-import 'package:bpjtteknik/utils/utils.dart';
-import 'package:bpjtteknik/view/dashboard/dashboard_page.dart';
-import 'package:bpjtteknik/view/tracking/add_tracking_page.dart';
-import 'package:bpjtteknik/view/tracking/map_tracking_page.dart';
-import 'package:bpjtteknik/view/tracking/tracking_detail_page.dart';
-import 'package:bpjtteknik/view/tracking/tracking_search_page.dart';
+import 'package:bpjt_k_gis_mobile_master/conn/API.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/db.dart';
+import 'package:bpjt_k_gis_mobile_master/helper/main_helper.dart';
+import 'package:bpjt_k_gis_mobile_master/utils/utils.dart';
+import 'package:bpjt_k_gis_mobile_master/view/dashboard/dashboard_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/tracking/add_tracking_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/tracking/map_tracking_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/tracking/tracking_detail_page.dart';
+import 'package:bpjt_k_gis_mobile_master/view/tracking/tracking_search_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
-import 'package:package_info/package_info.dart';
+import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:modal_progress_hud/modal_progress_hud.dart';
+// import 'package:package_info/package_info.dart';
 
 class ProblemListPage extends StatefulWidget {
   final segment;
@@ -39,7 +41,7 @@ class ProblemListPage extends StatefulWidget {
 }
 
 class _ProblemListPageState extends State<ProblemListPage> {
-  Screen size;
+  late Screen size;
 
   bool _loading = true;
 
@@ -52,16 +54,16 @@ class _ProblemListPageState extends State<ProblemListPage> {
   var prefRoleId;
   var prefIsApprove;
 
-  int totalData;
-  int currentPage;
+  late int totalData;
+  late int currentPage;
 
   RefreshController _refreshController = RefreshController(initialRefresh: false);
   var _trackingProblems = [];
 
-  String appName;
-  String packageName;
-  String version;
-  String buildNumber;
+  late String appName;
+  late String packageName;
+  late String version;
+  late String buildNumber;
 
   _getInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -153,7 +155,7 @@ class _ProblemListPageState extends State<ProblemListPage> {
             Container(
               child: FadeInImage.assetNetwork(
                   placeholder: 'assets/images/no_image_2.png',
-                  image: "http://103.6.53.254:13480/bpjt-teknik/public"+path+"/" + url,
+                  image: "http://103.6.53.254:13480/bpjt-teknik/public$path/$url",
                   height: 115.0,
               )
             )
@@ -166,48 +168,47 @@ class _ProblemListPageState extends State<ProblemListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Daftar Tracking Permasalahan'),
+        title: const Text('Daftar Tracking Permasalahan'),
         backgroundColor: colorPrimary,
         actions: [
           GestureDetector(
               onTap: () async {
                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => DashboardPage()));
               },
-              child: Icon(Icons.home, color: Colors.white,),
+              child: const Icon(Icons.home, color: Colors.white,),
           ),
-          SizedBox(width: 10.0,),
+          const SizedBox(width: 10.0,),
           GestureDetector(
               onTap: () async {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => new TrackingSearchPage(
-
-                )));
+                Navigator.push(context, MaterialPageRoute(builder: (context) => TrackingSearchPage()));
               },
-              child: Icon(Icons.search, color: Colors.white,),
+              child: const Icon(Icons.search, color: Colors.white,),
           ),
-          SizedBox(width: 10.0,),
+          const SizedBox(width: 10.0,),
         ],
       ),
       body: ModalProgressHUD(
-        child: _trackingProblems.length < 1 ? noData() : 
+        inAsyncCall: _loading,
+        child: _trackingProblems.isEmpty ? noData() :
           SmartRefresher(
             enablePullDown: true,
             enablePullUp: true,
-            header: WaterDropHeader(),
+            header: const WaterDropHeader(),
             footer: CustomFooter(
-              builder: (BuildContext context,LoadStatus mode){
+              builder: (BuildContext context,LoadStatus? mode){
                 Widget body ;
                 if (mode == LoadStatus.idle) {
-                  body =  Text("pull up load");
+                  body =  const Text("pull up load");
                 } else if (mode == LoadStatus.loading) {
-                  body =  CupertinoActivityIndicator();
+                  body =  const CupertinoActivityIndicator();
                 } else if (mode == LoadStatus.failed) {
-                  body = Text("Load Failed!Click retry!");
+                  body = const Text("Load Failed!Click retry!");
                 } else if (mode == LoadStatus.canLoading) {
-                    body = Text("release to load more");
+                    body = const Text("release to load more");
                 } else {
-                  body = Text("No more Data");
+                  body = const Text("No more Data");
                 }
-                return Container(
+                return SizedBox(
                   height: 55.0,
                   child: Center(child:body),
                 );
@@ -268,7 +269,7 @@ class _ProblemListPageState extends State<ProblemListPage> {
                       child: Row(
                         children: <Widget>[
                           Container(
-                            constraints: BoxConstraints(maxWidth: 125.0),
+                            constraints: const BoxConstraints(maxWidth: 125.0),
                             child: Align(
                               alignment: Alignment.topCenter,
                               child: displaySelectedFile((_trackingProblems[index].isEmpty ? null : _trackingProblems[index]['filepath']), (_trackingProblems[index].isEmpty ? null : _trackingProblems[index]['filename'])),
@@ -286,27 +287,27 @@ class _ProblemListPageState extends State<ProblemListPage> {
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text('${_trackingProblems[index]["segment"]}', style: TextStyle(color: Colors.white, fontSize: 16.0, fontWeight: FontWeight.bold)),
+                                      child: Text('${_trackingProblems[index]["segment"]}', style: const TextStyle(color: Colors.white, fontSize: 16.0, fontWeight: FontWeight.bold)),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text('Nama : ${_trackingProblems[index]["name"]}', style: TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold)),
+                                      child: Text('Nama : ${_trackingProblems[index]["name"]}', style: const TextStyle(color: Colors.white, fontSize: 14.0, fontWeight: FontWeight.bold)),
                                     ),
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(3.0, 3.0, 3.0, 0.0),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
-                                      child: Text((_trackingProblems[index]["date"] != null ? date(DateTime.parse(_trackingProblems[index]["date"])) : '-'), style: TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
+                                      child: Text((_trackingProblems[index]["date"] != null ? date(DateTime.parse(_trackingProblems[index]["date"])) : '-'), style: const TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
                                     ),
                                   ),
                                   Visibility(
                                     visible: (prefCompanyField == 'PMI' || prefCompanyField == 'PMO' || prefCompanyField == 'BPJT') && _trackingProblems[index]["note"] != null && _trackingProblems[index]["note"] != "" ? true : false,
-                                    child: Padding(
-                                      padding: const EdgeInsets.fromLTRB(0.0, 5.0, 3.0, 0.0),
+                                    child: const Padding(
+                                      padding: EdgeInsets.fromLTRB(0.0, 5.0, 3.0, 0.0),
                                       child: Align(
                                         alignment: Alignment.centerLeft,
                                         child: Row(
@@ -320,8 +321,8 @@ class _ProblemListPageState extends State<ProblemListPage> {
                                   ),
                                   Visibility(
                                     visible: (prefCompanyField == 'PMI' || prefCompanyField == 'PMO' || prefCompanyField == 'BPJT') && _trackingProblems[index]["note2"] != null && _trackingProblems[index]["note2"] != "" ? true : false,
-                                    child: Padding(
-                                      padding: const EdgeInsets.fromLTRB(0.0, 3.0, 3.0, 0.0),
+                                    child: const Padding(
+                                      padding: EdgeInsets.fromLTRB(0.0, 3.0, 3.0, 0.0),
                                       child: Align(
                                         alignment: Alignment.centerLeft,
                                         child: Row(
@@ -335,8 +336,8 @@ class _ProblemListPageState extends State<ProblemListPage> {
                                   ),
                                   Visibility(
                                     visible: (prefCompanyField == 'PMI' || prefCompanyField == 'PMO' || prefCompanyField == 'BPJT') && _trackingProblems[index]["note_answer"] != null && _trackingProblems[index]["note_answer"] != "" ? true : false,
-                                    child: Padding(
-                                      padding: const EdgeInsets.fromLTRB(0.0, 3.0, 3.0, 0.0),
+                                    child: const Padding(
+                                      padding: EdgeInsets.fromLTRB(0.0, 3.0, 3.0, 0.0),
                                       child: Align(
                                         alignment: Alignment.centerLeft,
                                         child: Row(
@@ -355,7 +356,7 @@ class _ProblemListPageState extends State<ProblemListPage> {
                                       child: Text((
                                         _trackingProblems[index]["problem"].length > 50 ?
                                         _trackingProblems[index]["problem"].substring(0, 50)+"..." :
-                                        _trackingProblems[index]["problem"]) , style: TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
+                                        _trackingProblems[index]["problem"]) , style: const TextStyle(color: Colors.white, fontSize: 13.0), textAlign: TextAlign.justify),
                                     ),
                                   ),
                                   // ExpandablePanel(
@@ -393,8 +394,8 @@ class _ProblemListPageState extends State<ProblemListPage> {
                                   // ),
                                 ],
                               ),
-                            ) 
-                          ),  
+                            )
+                          ),
                         ],
                       ),
                     ),
@@ -403,7 +404,6 @@ class _ProblemListPageState extends State<ProblemListPage> {
               }
             ),
           ),
-        inAsyncCall: _loading,
       ),
       floatingActionButton: _getFAB()
     );
@@ -412,32 +412,32 @@ class _ProblemListPageState extends State<ProblemListPage> {
   Widget _getFAB() {
     return SpeedDial(
       animatedIcon: AnimatedIcons.menu_close,
-      animatedIconTheme: IconThemeData(size: 22),
+      animatedIconTheme: const IconThemeData(size: 22),
       backgroundColor: Colors.white,
       visible: true,
       curve: Curves.bounceIn,
       children: [
         SpeedDialChild(
-          child: Icon(Icons.add),
+          child: const Icon(Icons.add),
           backgroundColor: Colors.white,
           onTap: () { 
             Navigator.push(context, MaterialPageRoute(builder: (context) => AddTrackingPage()));  
           },
           label: 'Lapor Tracking',
-          labelStyle: TextStyle(
+          labelStyle: const TextStyle(
               fontWeight: FontWeight.w500,
               color: Colors.white,
               fontSize: 16.0),
           labelBackgroundColor: colorPrimary
         ),
         SpeedDialChild(
-          child: Icon(Icons.map),
+          child: const Icon(Icons.map),
           backgroundColor: Colors.white,
           onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => MapTrackingPage()));
           },
           label: 'Map Tracking',
-          labelStyle: TextStyle(
+          labelStyle: const TextStyle(
               fontWeight: FontWeight.w500,
               color: Colors.white,
               fontSize: 16.0),
@@ -459,17 +459,17 @@ class _ProblemListPageState extends State<ProblemListPage> {
     // monitor network fetch
     await _getTrackingProblems(false);
     // if failed,use loadFailed(),if no data return,use LoadNodata()
-    if(mounted)
-    setState(() {
-
-    });
+    if(mounted) {
+      setState(() {}
+      );
+    }
     _refreshController.loadComplete();
   }
 
   Widget noData() {
     size = Screen(MediaQuery.of(context).size);
     return Center(
-      child: Container(
+      child: SizedBox(
         width: size.getWidthPx(300),
         height: size.getWidthPx(300),
         child: Column(
