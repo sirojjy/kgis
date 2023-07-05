@@ -183,7 +183,7 @@ class _RecapPageState extends State<RecapPage> {
                 //   style: SweetAlertStyle.loading
                 // );
 
-                createFile("http://103.6.53.254:13480/bpjt-teknik/public/index.php/api/recaps/pdf/download").then((res) async {
+                createFile("http://simk.bpjt.pu.go.id/bpjt-teknik/public/index.php/api/recaps/pdf/download").then((res) async {
                   final filename = '${DateTime.now().millisecondsSinceEpoch}.pdf';
 
                   Directory? dir = await getExternalStorageDirectory();
@@ -292,7 +292,7 @@ class _RecapPageState extends State<RecapPage> {
                                 image:
                                   _recaps[index]["filepath"] != null && _recaps[index]["filename"] != null ?
                                     Image.network(
-                                      "${"http://103.6.53.254:13480/bpjt-teknik/public"+_recaps[index]["filepath"]}/"+_recaps[index]["filename"],
+                                      "${"http://simk.bpjt.pu.go.id/bpjt-teknik/public"+_recaps[index]["filepath"]}/"+_recaps[index]["filename"],
                                   ).image : const AssetImage('assets/images/person_6x8.png')
                               )
                             ),

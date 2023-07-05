@@ -237,7 +237,7 @@ class _UserPageState extends State<UserPage> {
                                 image:
                                   _users[index]["filepath"] != null && _users[index]["filename"] != null ?
                                   NetworkImage (
-                                    "${"http://103.6.53.254:13480/bpjt-teknik/public" +
+                                    "${"http://simk.bpjt.pu.go.id/bpjt-teknik/public" +
                                         _users[index]["filepath"]}/" +
                                         _users[index]["filename"],
                                   )

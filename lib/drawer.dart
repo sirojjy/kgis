@@ -190,7 +190,7 @@ class DrawerBuild {
             ),
             InkWell(
               onTap: (){
-                Navigator.push(context, MaterialPageRoute(builder: (context) => HelpPage(url: "http://103.6.53.254:13480/bpjt-teknik/public/uploads/help_k_gis.pdf")));
+                Navigator.push(context, MaterialPageRoute(builder: (context) => HelpPage(url: "http://simk.bpjt.pu.go.id/bpjt-teknik/public/uploads/help_k_gis.pdf")));
               },
               child: ListTile(
                 title: Text('Help', style: TextStyle(color: Colors.white)),

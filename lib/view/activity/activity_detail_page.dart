@@ -76,8 +76,8 @@ class _ActivityDetailPageState extends State<ActivityDetailPage> {
         imageList[i]["filepath"] = "storage/app/media/activities";
       }
       if (!(imageList[i]["filename"]).contains(".pdf") && !(imageList[i]["filename"]).contains(".doc") && !(imageList[i]["filename"]).contains(".docx")) {
-        onlyImageList.add(Image.network("${"http://103.6.53.254:13480/bpjt-teknik/public"+imageList[i]["filepath"]}/"+imageList[i]["filename"]));
-        imagePathList.add("${"http://103.6.53.254:13480/bpjt-teknik/public"+imageList[i]["filepath"]}/"+imageList[i]["filename"]);
+        onlyImageList.add(Image.network("${"http://simk.bpjt.pu.go.id/bpjt-teknik/public"+imageList[i]["filepath"]}/"+imageList[i]["filename"]));
+        imagePathList.add("${"http://simk.bpjt.pu.go.id/bpjt-teknik/public"+imageList[i]["filepath"]}/"+imageList[i]["filename"]);
         pdfList.add("");
       } else {
         onlyImageList.add(Image.asset("assets/images/pdf_placeholder.png"));

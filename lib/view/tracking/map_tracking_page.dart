@@ -362,9 +362,9 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
     print("Height : $mapHeight");
     print("Coord X : ${coord.y}");
     print("Coord Y : ${coord.x}");
-    print("http://103.6.53.254:13480/kgis/index.php/wms/info/$_currentLayer/$west~$south~$east~$north/$mapWidth/$mapHeight/${coord.y}/${coord.x}");
+    print("http://simk.bpjt.pu.go.id/kgis/index.php/wms/info/$_currentLayer/$west~$south~$east~$north/$mapWidth/$mapHeight/${coord.y}/${coord.x}");
 
-    await API.getFeatureInfo("http://103.6.53.254:13480/kgis/index.php/wms/info/$_currentLayer/$west~$south~$east~$north/$mapWidth/$mapHeight/${coord.y}/${coord.x}").then((response) {
+    await API.getFeatureInfo("http://simk.bpjt.pu.go.id/kgis/index.php/wms/info/$_currentLayer/$west~$south~$east~$north/$mapWidth/$mapHeight/${coord.y}/${coord.x}").then((response) {
       if (!mounted) return;
       print("Response From Server :");
       print(response['data']);
@@ -450,7 +450,7 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
       return ProblemMarker(
         problem: Problem(
           name: latlng["problem_details"] ?? '-',
-          imagePath: "http://103.6.53.254:13480/bpjt-teknik/public'${latlng['photo']}",
+          imagePath: "http://simk.bpjt.pu.go.id/bpjt-teknik/public'${latlng['photo']}",
           lat: latlng["lat"],
           long: latlng["long"],
           date: latlng["date"]
@@ -546,7 +546,7 @@ class _MapTrackingPageState extends State<MapTrackingPage> {
                       crs: const Epsg4326(),
                       transparent: true,
                       format: 'image/png',
-                      baseUrl: 'http://103.6.53.254:13480/geoserver/bpjt/wms?',
+                      baseUrl: 'http://simk.bpjt.pu.go.id/geoserver/bpjt/wms?',
                       layers: [_currentLayer],
                     ),
                   ),

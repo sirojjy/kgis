@@ -6,7 +6,8 @@ import 'package:http/http.dart' as http;
 import '../helper/db_segments.dart';
 import '../utils/util.dart';
 
-const baseUrl = "http://103.6.53.254:13480/bpjt-teknik/public/index.php/api";
+const baseUrl = "http://simk.bpjt.pu.go.id/bpjt-teknik/public/index.php/api";
+// const baseUrl = "http://103.6.53.254:13480/bpjt-teknik/public/index.php/api";
 // const baseUrl = "http://192.168.100.4:8000/api";
 
 class API {

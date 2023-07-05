@@ -1,7 +1,9 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.bpjt_k_gis">
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
-        android:label="bpjt_k_gis_mobile_master"
         android:name="${applicationName}"
+        android:label="bpjt_k_gis_mobile_master"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

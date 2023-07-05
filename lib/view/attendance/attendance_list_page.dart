@@ -339,7 +339,7 @@ class AttendanceListPageState extends State<AttendanceListPage> {
         : (url.contains(".pdf") ? Column(children: <Widget>[Image.asset("assets/images/pdf_placeholder.png", width: 120.0,)]) : 
           FadeInImage.assetNetwork(
               placeholder: 'assets/images/no_image_2.png',
-              image: "http://103.6.53.254:13480/bpjt-teknik/public$path/$url",
+              image: "http://simk.bpjt.pu.go.id/bpjt-teknik/public$path/$url",
               height: 115.0,
           )
         ),

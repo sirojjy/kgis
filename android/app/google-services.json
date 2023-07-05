@@ -7,38 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:611382838002:android:a07db5a94867e0e2b6c66b",
+        "mobilesdk_app_id": "1:611382838002:android:262ac7404a11e2d2b6c66b",
         "android_client_info": {
           "package_name": "com.bpjt_k_gis"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "611382838002-5900gm3dcdfsve7stm34i77auhbfvog3.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDsT_8UuSy1yCJRU1WRvnT5YB6hVBz2h-M"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "611382838002-5900gm3dcdfsve7stm34i77auhbfvog3.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:611382838002:android:6c632ccc6974175eb6c66b",
-        "android_client_info": {
-          "package_name": "com.example.bpjt_k_gis_mobile_master"
         }
       },
       "oauth_client": [

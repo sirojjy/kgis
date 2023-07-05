@@ -107,13 +107,13 @@ class _TrackingDetailPageState extends State<TrackingDetailPage> {
         filepath = "storage/app/media/activities";
       }
       if (!(filename).contains(".pdf") && !(filename).contains(".doc") && !(filename).contains(".docx")) {
-        onlyImageList.add(Image.network("http://103.6.53.254:13480/bpjt-teknik/public$filepath/$filename"));
-        imagePathList.add("http://103.6.53.254:13480/bpjt-teknik/public$filepath/$filename");
+        onlyImageList.add(Image.network("http://simk.bpjt.pu.go.id/bpjt-teknik/public$filepath/$filename"));
+        imagePathList.add("http://simk.bpjt.pu.go.id/bpjt-teknik/public$filepath/$filename");
         pdfList.add("");
       } else {
         onlyImageList.add(Image.asset("assets/images/pdf_placeholder.png"));
         imagePathList.add("");
-        pdfList.add("http://103.6.53.254:13480/bpjt-teknik/public$filepath/$filename");
+        pdfList.add("http://1simk.bpjt.pu.go.id/bpjt-teknik/public$filepath/$filename");
       }
     // }
   }

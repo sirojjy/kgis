@@ -226,7 +226,7 @@ class _ChangeAvatarPageState extends State<ChangeAvatarPage> {
 
     if (userDetail != null && filePath == null) {
       if (userDetail["filepath"] != null && userDetail["filename"] != null) {
-        file = NetworkImage("http://103.6.53.254:13480/bpjt-teknik/public"+userDetail["filepath"]+"/"+userDetail["filename"]);
+        file = NetworkImage("http://simk.bpjt.pu.go.id/bpjt-teknik/public"+userDetail["filepath"]+"/"+userDetail["filename"]);
       } else {
         userDetail = 'user detail kososng';
         filePath = 'file path kosong';

@@ -155,7 +155,7 @@ class _ProblemListPageState extends State<ProblemListPage> {
             Container(
               child: FadeInImage.assetNetwork(
                   placeholder: 'assets/images/no_image_2.png',
-                  image: "http://103.6.53.254:13480/bpjt-teknik/public$path/$url",
+                  image: "http://simk.bpjt.pu.go.id/bpjt-teknik/public$path/$url",
                   height: 115.0,
               )
             )
